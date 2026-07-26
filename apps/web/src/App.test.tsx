@@ -107,3 +107,80 @@ test("sign out returns to the sign-in page", async () => {
 
   expect(screen.getByRole("heading", { name: "Sign in to RunScope" })).toBeInTheDocument();
 });
+
+test("creates a project through the protected form", async () => {
+  let created = false;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    const url = String(input);
+    if (url.endsWith("/auth/sign-in")) {
+      return new Response(
+        JSON.stringify({
+          access_token: "test-token",
+          token_type: "bearer",
+          expires_in: 1800,
+          user: {
+            id: "019f9dc7-2f4c-7ec0-ac91-9652cd845c33",
+            email: "researcher@runscope.dev",
+            role: "researcher",
+            created_at: "2026-07-26T00:00:00Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    if (url.includes("/projects") && init?.method === "POST") {
+      created = true;
+      return new Response(
+        JSON.stringify({
+          id: "019f9dc7-2f4c-7ec0-ac91-9652cd845c34",
+          name: "Forecasting",
+          description: "Demand models",
+          created_by: "019f9dc7-2f4c-7ec0-ac91-9652cd845c33",
+          created_at: "2026-07-26T00:00:00Z",
+          updated_at: "2026-07-26T00:00:00Z",
+        }),
+        { status: 201, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    if (url.includes("/projects?")) {
+      return new Response(
+        JSON.stringify({
+          items: created
+            ? [
+                {
+                  id: "019f9dc7-2f4c-7ec0-ac91-9652cd845c34",
+                  name: "Forecasting",
+                  description: "Demand models",
+                  created_by: "019f9dc7-2f4c-7ec0-ac91-9652cd845c33",
+                  created_at: "2026-07-26T00:00:00Z",
+                  updated_at: "2026-07-26T00:00:00Z",
+                },
+              ]
+            : [],
+          page: 1,
+          page_size: 20,
+          total: created ? 1 : 0,
+          pages: created ? 1 : 0,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(JSON.stringify({ status: "ok", service: "api" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+  const user = userEvent.setup();
+  renderApp("/sign-in");
+  await user.click(screen.getByRole("button", { name: "Sign in" }));
+  await screen.findByRole("heading", { name: "Overview" });
+
+  await user.click(screen.getByRole("link", { name: "Projects" }));
+  expect(await screen.findByRole("heading", { name: "No projects yet" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "New project" }));
+  await user.type(screen.getByLabelText("Project name"), "Forecasting");
+  await user.type(screen.getByLabelText("Description"), "Demand models");
+  await user.click(screen.getByRole("button", { name: "Create project" }));
+
+  expect(await screen.findByRole("link", { name: "Forecasting" })).toBeInTheDocument();
+});

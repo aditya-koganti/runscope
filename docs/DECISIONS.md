@@ -55,3 +55,11 @@ Compose provides reproducible PostgreSQL, Redis, Redpanda, and MinIO services.
 Kubernetes artifacts are educational deployment examples added after local
 behavior works; they are not a claim of production readiness.
 
+## ADR-008: Frontend browser tests are co-located with the web package
+
+**Status:** Accepted.
+
+Executable Playwright specs live in `apps/web/e2e` rather than root `tests/e2e`
+so Node resolves the web package's locked `@playwright/test` dependency without
+a second root dependency installation. Cross-service Python integration tests
+remain under root `tests/integration`.
