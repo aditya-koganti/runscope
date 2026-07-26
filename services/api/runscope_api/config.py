@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     s3_secret_key: str = "change-me-local-only"
     s3_bucket: str = "runscope-artifacts"
     jwt_secret: str = "change-me-local-development-only"
+    jwt_issuer: str = "runscope"
+    access_token_minutes: int = 30
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     log_level: str = "INFO"
 

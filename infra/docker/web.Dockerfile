@@ -1,8 +1,12 @@
-FROM node:22-alpine AS build
+FROM node:22-alpine AS dependencies
 WORKDIR /app
 COPY apps/web/package*.json ./
 RUN npm ci
+
+FROM dependencies AS development
 COPY apps/web ./
+
+FROM development AS build
 RUN npm run build
 
 FROM nginx:1.27-alpine

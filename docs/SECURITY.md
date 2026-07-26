@@ -8,6 +8,11 @@ memory for the initial implementation and cleared on sign-out. This is not an
 enterprise identity system: there is no SSO, MFA, account recovery, refresh-token
 rotation, organization isolation, or centralized policy engine.
 
+Passwords use Argon2 through `pwdlib`. Access tokens are HS256 JWTs with issuer,
+subject, role, issued-at, and expiration claims and a 30-minute local default.
+The three documented `@runscope.dev` accounts and passwords exist only after the
+explicit local seed command.
+
 ## Authorization
 
 Every protected API query resolves the current user and performs server-side
@@ -38,3 +43,9 @@ are unsuitable for untrusted production tenants. Production work would require
 OIDC, TLS everywhere, secret management, tenant isolation, rate limiting,
 malware/content controls, network policy, audit export, and independent review.
 
+As of the latest executed `npm audit` on 2026-07-26, npm reports two high
+advisories for React Router 7.18's server-component action handling. RunScope is
+a client-rendered SPA and does not use React Server Components, but the advisory
+remains visible. npm recommends `react-router-dom` 8.3.0, which is not published
+in the registry available to this environment; it must be upgraded when a fixed
+compatible release is actually available.

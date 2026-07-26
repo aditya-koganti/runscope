@@ -37,3 +37,7 @@ Copy `.env.example` to an untracked `.env`, then use `make setup` and `make dev`
 Windows systems without GNU Make can run `python -m pip install -e ".[dev]"`,
 `npm ci --prefix apps/web`, and `docker compose up --build` directly. API
 liveness is `/api/v1/health`; readiness is `/api/v1/ready`.
+
+Apply schema changes with `make migrate` and create the local-only viewer,
+researcher, and administrator accounts with `make seed`. Seeding is idempotent;
+it does not print passwords or tokens.

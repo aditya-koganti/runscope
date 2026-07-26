@@ -1,24 +1,23 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-function FoundationPage() {
-  return (
-    <main className="foundation">
-      <section aria-labelledby="product-title">
-        <p className="eyebrow">Machine learning operations</p>
-        <h1 id="product-title">RunScope</h1>
-        <p>
-          The control plane is ready. Authentication and experiment workflows are
-          added in the next vertical slices.
-        </p>
-      </section>
-    </main>
-  );
-}
+import { AuthProvider } from "./auth/AuthContext";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { AppShell } from "./components/AppShell";
+import { OverviewPage } from "./pages/OverviewPage";
+import { SignInPage } from "./pages/SignInPage";
 
 export function App() {
   return (
-    <Routes>
-      <Route path="*" element={<FoundationPage />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppShell />}>
+            <Route path="/overview" element={<OverviewPage />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/overview" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
