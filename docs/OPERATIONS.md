@@ -31,6 +31,9 @@ Restarting a worker can leave a lease until expiry; reconciliation requeues safe
 work according to its attempt state. Artifact upload failures fail a run with a
 stable code rather than report false success.
 
-Exact commands and troubleshooting steps will be added as services are built and
-verified.
+## Foundation commands
 
+Copy `.env.example` to an untracked `.env`, then use `make setup` and `make dev`.
+Windows systems without GNU Make can run `python -m pip install -e ".[dev]"`,
+`npm ci --prefix apps/web`, and `docker compose up --build` directly. API
+liveness is `/api/v1/health`; readiness is `/api/v1/ready`.

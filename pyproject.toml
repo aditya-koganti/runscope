@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "runscope"
+version = "0.1.0"
+description = "A self-service platform for trusted CPU-based ML workloads"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "aiokafka>=0.11,<1",
+  "alembic>=1.13,<2",
+  "asyncpg>=0.29,<1",
+  "boto3>=1.34,<2",
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "numpy>=1.26,<3",
+  "passlib[bcrypt]>=1.7,<2",
+  "prometheus-client>=0.20,<1",
+  "pydantic-settings>=2.4,<3",
+  "pyjwt>=2.9,<3",
+  "python-multipart>=0.0.9,<1",
+  "redis>=5,<6",
+  "scikit-learn>=1.5,<2",
+  "sqlalchemy[asyncio]>=2.0.32,<3",
+  "uvicorn[standard]>=0.30,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "aiosqlite>=0.20,<1",
+  "locust>=2.31,<3",
+  "mypy>=1.11,<2",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.24,<1",
+  "pytest-cov>=5,<6",
+  "ruff>=0.6,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["services/api/runscope_api", "packages/contracts/runscope_contracts"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["services/api/alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["runscope_api", "runscope_contracts"]
+mypy_path = ["services/api", "packages/contracts"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["aiokafka.*", "boto3.*", "botocore.*", "passlib.*", "sklearn.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["services/api/tests", "services/scheduler/tests", "services/worker/tests", "tests/integration"]
+asyncio_mode = "auto"
+addopts = "--strict-markers --strict-config"
+markers = [
+  "integration: requires local infrastructure services",
+]
