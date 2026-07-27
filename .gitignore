@@ -15,6 +15,7 @@ dist/
 *.tsbuildinfo
 playwright-report/
 test-results/
+load-results/
 
 .idea/
 .vscode/

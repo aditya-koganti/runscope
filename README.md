@@ -36,7 +36,7 @@ RunScope never accepts arbitrary Python or shell commands.
 
 ## Foundation setup
 
-The target runtime is Python 3.12 and Node 22.13 or newer.
+The target runtime is Python 3.12 and Node 22.22 or newer.
 
 ```bash
 cp .env.example .env
@@ -65,7 +65,10 @@ identity system. See `docs/SECURITY.md`.
 
 See [Product requirements](docs/PRODUCT_REQUIREMENTS.md),
 [Architecture](docs/ARCHITECTURE.md), and the
-[Implementation plan](docs/IMPLEMENTATION_PLAN.md).
+[Implementation plan](docs/IMPLEMENTATION_PLAN.md). Deployment and validation
+details are in [Kubernetes](docs/KUBERNETES.md),
+[Performance](docs/PERFORMANCE.md), [Security](docs/SECURITY.md), and
+[Operations](docs/OPERATIONS.md).
 
 RunScope deliberately does not support GPU scheduling, HPC workloads,
 distributed training, arbitrary Python, or arbitrary shell commands.

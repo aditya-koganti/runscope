@@ -2,7 +2,7 @@
 
 ## Delivery status
 
-Phases 0 through 9 are complete as of 2026-07-27. The current vertical slice
+Phases 0 through 10 are complete as of 2026-07-27. The current vertical slice
 uses PostgreSQL-backed run records, a trusted versioned Iris classifier, the
 central lifecycle state machine, durable logs/metrics/events, MinIO artifacts,
 and a Playwright-verified browser workflow. Run submission uses a
@@ -15,6 +15,10 @@ heartbeats, CPU/memory capacity, and expiring PostgreSQL leases. The control
 plane exposes bounded dependency probes, a durable platform summary, and
 Prometheus metrics; storage and broker failures use finite retries, errors keep
 stable public contracts, and structured logs redact sensitive key variants.
+Production images now run without root, the web image provides a same-origin
+API/SSE gateway, CI covers code, dependencies, images, secrets, and the browser
+workflow, Kubernetes reference manifests validate against 1.29 schemas, and
+measured Locust smoke baselines document control-plane and assignment latency.
 
 ## Phase 0 — Planning
 

@@ -30,7 +30,7 @@ services:
       context: .
       dockerfile: infra/docker/web.Dockerfile
     ports:
-      - "5173:80"
+      - "5173:8080"
     depends_on:
       api:
         condition: service_healthy

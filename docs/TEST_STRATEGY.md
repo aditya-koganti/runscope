@@ -78,6 +78,29 @@
   artifact download, cancellation, intentional failure/retry, comparison, both
   workers, and the authenticated platform-health page.
 
+## Phase 10 verification snapshot
+
+- The Python 3.12 development image contains the declared dev dependency set;
+  the existing 107-test backend suite remains the correctness baseline.
+- The Node 22.22 development image installs the locked React 19/React Router 8
+  tree with `npm ci`; frontend lint, TypeScript, 7 Vitest tests, and the
+  production build pass.
+- Production API and web containers build and run as non-root users. All nine
+  Compose services start, and the web origin successfully proxies API health.
+- The final full Chromium workflow passes through the production proxy in 24.2
+  seconds (19.5 seconds in the test). It covers real execution, artifacts,
+  cancellation, failure/retry, comparison, workers, and platform health.
+- Kustomize renders ten Kubernetes resources, all ten of which pass
+  kubeconform 0.6.7 against Kubernetes 1.29 schemas. No cluster rollout was
+  performed.
+- The 5-user read/SSE and 2-user mutating Locust smoke runs completed without
+  failures. Exact latency and scheduling results are recorded in
+  `docs/PERFORMANCE.md`.
+- `npm audit --audit-level=high` reports zero vulnerabilities. The Python audit
+  and Docker Scout image scans were not allowed locally because they may
+  disclose dependency metadata; equivalent blocking CI gates are configured
+  but not claimed as executed.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,

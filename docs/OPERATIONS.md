@@ -55,3 +55,36 @@ configured with `RUNSCOPE_STORAGE_MAX_ATTEMPTS`,
 `RUNSCOPE_STORAGE_RETRY_BASE_SECONDS`, and `RUNSCOPE_OUTBOX_MAX_ATTEMPTS`.
 Retries are finite. Exhausted unpublished messages remain durable and visible in
 the platform summary for operator investigation.
+
+## Production images
+
+The Python production image installs only runtime dependencies, runs as UID/GID
+10001, and exposes Uvicorn on port 8000. The web production image builds with
+Node 22.22 and serves static assets from the unprivileged Nginx image on port
+8080. Nginx proxies `/api/` to the API, including unbuffered SSE, so browsers
+use one origin in Compose and Kubernetes.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` defines four independent gates:
+
+- Python 3.12 formatting, lint, mypy, and pytest;
+- Node 22.22 install, lint, type check, Vitest, and production build;
+- production image builds and Trivy high/critical vulnerability scans;
+- Python/Node dependency audits plus repository secret/misconfiguration scans;
+- a complete Compose migration, seed, and Chromium workflow.
+
+The workflow is concurrency-bounded and tears down Compose volumes even when
+the browser test fails. The YAML has been checked with pinned actionlint 1.7.7.
+GitHub Actions itself has not been executed from this local environment.
+
+## Kubernetes and load validation
+
+`kubectl kustomize infra/kubernetes` renders the reference deployment. Its ten
+resources validate against Kubernetes 1.29 schemas with kubeconform 0.6.7.
+No target cluster was provided, so rollout and live probe behavior are not
+claimed as tested. See `docs/KUBERNETES.md`.
+
+Locust read/SSE and opt-in trusted-submission scenarios are documented under
+`tests/load`. The dated local baseline and its scope are in
+`docs/PERFORMANCE.md`.

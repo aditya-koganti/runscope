@@ -1,4 +1,4 @@
-.PHONY: setup dev stop clean test test-backend test-frontend test-e2e lint format migrate seed demo logs load-test
+.PHONY: setup dev stop clean test test-backend test-frontend test-e2e lint format security migrate seed demo logs load-test load-test-mutations kubernetes-render
 
 setup:
 	python -m pip install -e ".[dev]"
@@ -33,6 +33,10 @@ format:
 	python -m ruff format .
 	cd apps/web && npx prettier --write .
 
+security:
+	python -m pip_audit
+	cd apps/web && npm audit --audit-level=high
+
 migrate:
 	alembic -c services/api/alembic.ini upgrade head
 
@@ -46,4 +50,10 @@ logs:
 	docker compose logs --follow --tail=200
 
 load-test:
-	locust -f tests/load/locustfile.py
+	locust -f tests/load/locustfile.py --host http://localhost:8000/api/v1 --headless --users 5 --spawn-rate 1 --run-time 30s --tags read sse
+
+load-test-mutations:
+	RUNSCOPE_LOAD_ENABLE_MUTATIONS=true locust -f tests/load/locustfile.py --host http://localhost:8000/api/v1 --headless --users 2 --spawn-rate 1 --run-time 20s --tags submission scheduler
+
+kubernetes-render:
+	kubectl kustomize infra/kubernetes

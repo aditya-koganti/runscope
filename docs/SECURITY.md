@@ -47,9 +47,16 @@ are unsuitable for untrusted production tenants. Production work would require
 OIDC, TLS everywhere, secret management, tenant isolation, rate limiting,
 malware/content controls, network policy, audit export, and independent review.
 
-As of the latest executed `npm audit` on 2026-07-26, npm reports two high
-advisories for React Router 7.18's server-component action handling. RunScope is
-a client-rendered SPA and does not use React Server Components, but the advisory
-remains visible. npm recommends `react-router-dom` 8.3.0, which is not published
-in the registry available to this environment; it must be upgraded when a fixed
-compatible release is actually available.
+The 2026-07-27 frontend dependency review upgraded the application to React
+19.2.7, React Router 8.3.0, Vite 7.3.6, and a Node 22.22 baseline. The latest
+executed `npm audit --audit-level=high` reported zero vulnerabilities. The
+frontend container rebuild uses `npm ci`, so the audited lockfile is also the
+build input.
+
+Python dependency auditing is configured as a blocking CI job. A local
+`pip-audit` execution was not performed because this environment did not permit
+sending the dependency inventory to an external vulnerability service. Local
+Docker Scout image scans were not executed for the same disclosure reason.
+GitHub Actions performs Trivy high/critical image scans plus repository
+misconfiguration and secret scans; those remote jobs are configured but have
+not been claimed as locally passing.

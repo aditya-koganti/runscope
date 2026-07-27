@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { ApiError, apiRequest } from "../api/client";
 import { useAuth } from "../auth/authState";

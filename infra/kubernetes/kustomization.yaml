@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: runscope
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - migration-job.yaml
+  - api.yaml
+  - web.yaml
+  - scheduler.yaml
+  - worker.yaml
+images:
+  - name: ghcr.io/example/runscope-python
+    newName: runscope-python
+    newTag: local
+  - name: ghcr.io/example/runscope-web
+    newName: runscope-web
+    newTag: local

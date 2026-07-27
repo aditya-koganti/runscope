@@ -149,3 +149,24 @@ publish attempts and the exception type, without persisting credentials or
 exception messages. Domain commands are not blindly replayed; durable state,
 optimistic concurrency, and consumer deduplication remain their safety
 mechanisms.
+
+## ADR-017: Same-origin web gateway for browser traffic
+
+**Status:** Accepted.
+
+The production web container serves the SPA and proxies `/api/` to the API.
+This removes build-time dependence on a developer hostname, gives SSE one
+well-defined proxy path, and lets a deployment terminate TLS at one browser
+origin. The Vite development server mirrors the route with a local proxy.
+Direct API exposure remains useful for documentation and automation.
+
+## ADR-018: Kubernetes deploys application processes, not bundled state
+
+**Status:** Accepted.
+
+The reference manifests deploy API, web, scheduler, workers, and migrations.
+PostgreSQL, Redis, Redpanda, and MinIO remain explicit service contracts rather
+than embedded single-node charts. Backup, upgrades, authentication, and
+availability for stateful systems are operator choices. Workers use a
+StatefulSet so their broker identities remain stable; this is still an
+educational reference and not a production distribution.

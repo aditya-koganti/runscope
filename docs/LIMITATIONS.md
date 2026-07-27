@@ -11,11 +11,15 @@ RunScope is a local educational platform for trusted, small CPU workloads.
   does not model NUMA, disk, network, preemption, fairness, or autoscaling.
 - Compose dependencies are single-node and not highly available.
 - Kubernetes examples are local/reference manifests, not a supported production
-  distribution.
+  distribution. They validate against Kubernetes 1.29 schemas but have not
+  been applied to a real cluster in this environment.
 - SSE uses REST recovery and is not a permanent event archive.
 - Demonstration passwords and infrastructure defaults are safe only on a local,
   isolated developer machine.
+- The current production frontend bundle is about 694 kB before compression
+  (about 206 kB gzip); route-level code splitting is future polish.
+- The short local Locust runs are smoke baselines, not capacity, soak, or
+  multi-host performance claims.
 
 Verified environment-specific limitations and known bugs will be appended during
 implementation rather than predicted.
-
