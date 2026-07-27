@@ -105,3 +105,25 @@ kill a process mid-write. A retry copies and revalidates the failed run's
 parameters into a new queued child, increments `attempt_number`, and preserves
 the failed parent as immutable history. The demonstration retry UI changes only
 the explicit `fail_intentionally` parameter; arbitrary code remains impossible.
+
+## ADR-013: Targeted assignments use one consumer group per worker identity
+
+**Status:** Accepted for the local educational topology.
+
+The scheduler polls and locks durable queued runs, reserves CPU/memory through
+an expiring allocation, and publishes `run.assigned`. Each configured worker
+name maps to a stable database UUID and therefore a stable Kafka consumer
+group. Every worker sees assignments but only the target accepts one; this
+avoids an untargeted shared group handing a lease to the wrong process. It is
+simple and correct for a small pool, but a production fleet would use partition
+routing or a dedicated dispatch protocol to avoid broadcast overhead.
+
+## ADR-014: Heartbeats extend leases and reconciliation owns recovery
+
+**Status:** Accepted.
+
+Worker heartbeats recompute capacity from active database allocations and
+extend their lease expiries. Scheduler reconciliation marks stale workers,
+requeues work that never started, fails running work whose worker vanished, and
+releases capacity transactionally. Completed, failed, and cancelled execution
+paths also release their allocations before committing final state.

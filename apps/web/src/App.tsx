@@ -13,6 +13,8 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { RunDetailPage } from "./pages/RunDetailPage";
 import { RunsPage } from "./pages/RunsPage";
+import { WorkerDetailPage } from "./pages/WorkerDetailPage";
+import { WorkersPage } from "./pages/WorkersPage";
 
 export function App() {
   return (
@@ -36,6 +38,8 @@ export function App() {
             <Route path="/runs" element={<RunsPage />} />
             <Route path="/runs/compare" element={<CompareRunsPage />} />
             <Route path="/runs/:runId" element={<RunDetailPage />} />
+            <Route path="/workers" element={<WorkersPage />} />
+            <Route path="/workers/:workerId" element={<WorkerDetailPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/overview" replace />} />

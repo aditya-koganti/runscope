@@ -205,7 +205,13 @@ export function RunDetailPage() {
               <span>Worker assignment</span>
               <strong>{run.data.assigned_worker_id ? "Assigned" : "Pending"}</strong>
               <small>
-                {run.data.assigned_worker_id?.slice(0, 8) ?? "No worker assigned"}
+                {run.data.assigned_worker_id ? (
+                  <Link to={`/workers/${run.data.assigned_worker_id}`}>
+                    {run.data.assigned_worker_id.slice(0, 8)}
+                  </Link>
+                ) : (
+                  "No worker assigned"
+                )}
               </small>
             </article>
           </section>

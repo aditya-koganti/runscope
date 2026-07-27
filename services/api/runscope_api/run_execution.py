@@ -19,6 +19,7 @@ from runscope_api.middleware import correlation_id_context
 from runscope_api.models import (
     Artifact,
     OutboxMessage,
+    ResourceAllocation,
     Run,
     RunLog,
     RunMetric,
@@ -31,6 +32,7 @@ from runscope_api.state_machine import transition_run
 from runscope_api.storage import ArtifactStore
 from runscope_api.templates.registry import registry
 from runscope_api.templates.slow_demo import SlowDemoParameters
+from runscope_api.worker_registry import release_allocation
 
 logger = logging.getLogger(__name__)
 LivePublisher = Callable[[str, dict[str, Any]], Awaitable[None]]
@@ -132,9 +134,23 @@ async def execute_existing_run(
     artifact_store: ArtifactStore,
     run_id: UUID,
     publish_live: LivePublisher | None = None,
+    expected_worker_id: UUID | None = None,
+    lease_token: UUID | None = None,
 ) -> Run | None:
     run = await session.get(Run, run_id)
-    if run is None or run.status != RunStatus.QUEUED:
+    if run is None or run.status != RunStatus.SCHEDULING:
+        return run
+    allocation = await session.scalar(
+        select(ResourceAllocation).where(
+            ResourceAllocation.run_id == run.id,
+            ResourceAllocation.released_at.is_(None),
+        )
+    )
+    if (
+        allocation is None
+        or (expected_worker_id is not None and allocation.worker_id != expected_worker_id)
+        or (lease_token is not None and allocation.lease_token != lease_token)
+    ):
         return run
     template = await session.get(TrainingTemplate, run.template_id)
     if template is None:
@@ -149,11 +165,10 @@ async def execute_existing_run(
     transition_run(
         session,
         run,
-        RunStatus.SCHEDULING,
-        "run.scheduling",
-        {"execution_mode": "background-worker"},
+        RunStatus.RUNNING,
+        "run.started",
+        {"worker_id": str(allocation.worker_id), "lease_id": str(allocation.id)},
     )
-    transition_run(session, run, RunStatus.RUNNING, "run.started")
     await session.commit()
     if publish_live:
         await publish_live("run.status", {"status": RunStatus.RUNNING.value})
@@ -206,6 +221,7 @@ async def execute_existing_run(
             "run.succeeded",
             {"metric_count": len(result.metrics), "artifact_count": len(result.artifacts)},
         )
+        await release_allocation(session, run.id)
         await session.commit()
         if publish_live:
             for sequence, (level, message) in enumerate(result.logs, start=1):
@@ -233,6 +249,7 @@ async def execute_existing_run(
         failed_run.failure_code = "template_execution_failed"
         failed_run.failure_message = "Trusted template execution failed"
         transition_run(session, failed_run, RunStatus.FAILED, "run.failed")
+        await release_allocation(session, failed_run.id)
         await session.commit()
         run = failed_run
         if publish_live:
@@ -281,6 +298,7 @@ async def execute_slow_run(
             )
             session.add(cancel_log)
             transition_run(session, run, RunStatus.CANCELLED, "run.cancelled")
+            await release_allocation(session, run.id)
             await session.commit()
             if publish_live:
                 await publish_live(
@@ -334,6 +352,7 @@ async def execute_slow_run(
             "run.failed",
             {"retryable": True, "intentional": True},
         )
+        await release_allocation(session, run.id)
         await session.commit()
         if publish_live:
             await publish_live(
@@ -369,6 +388,7 @@ async def execute_slow_run(
         "run.succeeded",
         {"metric_count": total_steps, "artifact_count": 1},
     )
+    await release_allocation(session, run.id)
     await session.commit()
     if publish_live:
         await publish_live("run.status", {"status": RunStatus.SUCCEEDED.value})

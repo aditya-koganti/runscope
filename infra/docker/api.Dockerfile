@@ -8,6 +8,7 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY services/api ./services/api
 COPY services/worker ./services/worker
+COPY services/scheduler ./services/scheduler
 COPY packages/contracts ./packages/contracts
 
 FROM runtime AS development

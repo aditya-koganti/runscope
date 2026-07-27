@@ -16,6 +16,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Uuid,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -38,6 +39,12 @@ class RunStatus(StrEnum):
     CANCELLING = "CANCELLING"
     CANCELLED = "CANCELLED"
     RETRYING = "RETRYING"
+
+
+class WorkerStatus(StrEnum):
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+    STALE = "STALE"
 
 
 class TimestampMixin:
@@ -163,7 +170,11 @@ class Run(Base):
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     requested_cpu: Mapped[float] = mapped_column(Float, nullable=False)
     requested_memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
-    assigned_worker_id: Mapped[UUID | None] = mapped_column(Uuid, nullable=True)
+    assigned_worker_id: Mapped[UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("workers.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     parent_run_id: Mapped[UUID | None] = mapped_column(
         Uuid,
@@ -316,6 +327,61 @@ class RunEvent(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
+class Worker(TimestampMixin, Base):
+    __tablename__ = "workers"
+    __table_args__ = (Index("ix_workers_status_heartbeat", "status", "last_heartbeat_at"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    status: Mapped[WorkerStatus] = mapped_column(
+        Enum(
+            WorkerStatus,
+            name="worker_status",
+            values_callable=lambda values: [value.value for value in values],
+        ),
+        nullable=False,
+        default=WorkerStatus.ONLINE,
+    )
+    total_cpu: Mapped[float] = mapped_column(Float, nullable=False)
+    available_cpu: Mapped[float] = mapped_column(Float, nullable=False)
+    total_memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
+    available_memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
+    current_run_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_heartbeat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ResourceAllocation(Base):
+    __tablename__ = "resource_allocations"
+    __table_args__ = (
+        Index("ix_resource_allocations_worker_released", "worker_id", "released_at"),
+        Index("ix_resource_allocations_lease_expires", "lease_expires_at"),
+        Index(
+            "uq_resource_allocations_active_run",
+            "run_id",
+            unique=True,
+            postgresql_where=text("released_at IS NULL"),
+            sqlite_where=text("released_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    run_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("runs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    worker_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("workers.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    cpu: Mapped[float] = mapped_column(Float, nullable=False)
+    memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
+    lease_token: Mapped[UUID] = mapped_column(Uuid, unique=True, nullable=False, default=uuid4)
+    lease_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class OutboxMessage(Base):

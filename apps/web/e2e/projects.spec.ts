@@ -125,4 +125,9 @@ test("researcher completes the classification, cancellation, retry, and comparis
   await expect(page.getByRole("heading", { name: "Parameters" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Final metrics" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Metric overlay" })).toBeVisible();
+
+  await navigateInApp(page, "/workers");
+  await expect(page.getByRole("heading", { name: "Workers" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "worker-local-1" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "worker-local-2" })).toBeVisible();
 });

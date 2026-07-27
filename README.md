@@ -10,8 +10,9 @@ scikit-learn training in a separate worker, inspect lifecycle
 events/logs/metrics, and download MinIO-backed model, metric JSON, and SVG chart
 artifacts. A second trusted template demonstrates live progress, cooperative
 cancellation, intentional failure, parent-child retry lineage, notes/tags, and
-two-to-five-run comparison. RunScope never accepts arbitrary Python or shell
-commands.
+two-to-five-run comparison. A separate scheduler assigns queued work across two
+heartbeating local workers using CPU/memory capacity and database-backed leases.
+RunScope never accepts arbitrary Python or shell commands.
 
 ## Demonstration workflow
 
@@ -25,6 +26,8 @@ commands.
 6. Submit **Slow progress demonstration** and cancel it while it is running.
 7. Submit another slow run with intentional failure enabled, then retry it.
 8. Save notes/tags and compare the successful classification and retry runs.
+9. Open **Workers** to inspect heartbeat age, free capacity, utilization, and
+   active leases.
 
 ## Foundation setup
 

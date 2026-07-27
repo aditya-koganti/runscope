@@ -2,9 +2,9 @@
 
 ## Local topology
 
-Docker Compose will run web, API, scheduler, worker, PostgreSQL, Redis, Redpanda,
-and MinIO. Health checks and dependency-aware readiness prevent a process being
-called ready before required services respond.
+Docker Compose runs web, API, scheduler, two workers, PostgreSQL, Redis,
+Redpanda, and MinIO. Health checks and dependency-aware readiness prevent a
+process being called ready before required services respond.
 
 ## Configuration
 
@@ -41,3 +41,8 @@ liveness is `/api/v1/health`; readiness is `/api/v1/ready`.
 Apply schema changes with `make migrate` and create the local-only viewer,
 researcher, and administrator accounts with `make seed`. Seeding is idempotent;
 it does not print passwords or tokens.
+
+Workers use stable `RUNSCOPE_WORKER_NAME` values. CPU and memory declarations
+are allocatable educational capacity, not operating-system isolation. The
+default heartbeat is every three seconds; leases expire after 30 seconds and a
+worker becomes stale after 15 seconds without a heartbeat.

@@ -18,6 +18,8 @@ x-python-service: &python-service
     RUNSCOPE_S3_BUCKET: runscope-artifacts
     RUNSCOPE_ARTIFACT_BACKEND: s3
     RUNSCOPE_JWT_SECRET: runscope-local-jwt-secret-only-32-plus
+    RUNSCOPE_WORKER_STALE_SECONDS: 15
+    RUNSCOPE_ALLOCATION_LEASE_SECONDS: 30
   depends_on:
     postgres:
       condition: service_healthy
@@ -61,6 +63,9 @@ services:
   worker:
     <<: *python-service
     command: ["python", "-m", "runscope_worker.main"]
+    environment:
+      <<: *python-environment
+      RUNSCOPE_WORKER_NAME: worker-local-1
     restart: unless-stopped
     depends_on:
       postgres:
@@ -70,6 +75,33 @@ services:
       minio:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  worker-secondary:
+    <<: *python-service
+    command: ["python", "-m", "runscope_worker.main"]
+    environment:
+      <<: *python-environment
+      RUNSCOPE_WORKER_NAME: worker-local-2
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    <<: *python-service
+    command: ["python", "-m", "runscope_scheduler.main"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
         condition: service_healthy
 
   postgres:

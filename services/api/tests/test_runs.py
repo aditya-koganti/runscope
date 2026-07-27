@@ -4,13 +4,16 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
+from runscope_api.config import get_settings
 from runscope_api.db import SessionFactory
 from runscope_api.main import create_app
 from runscope_api.models import Experiment, OutboxMessage, Project, Role, User
 from runscope_api.security import create_access_token, hash_password
 from runscope_api.seed import seed_training_templates
 from runscope_api.storage import LocalArtifactStore, get_artifact_store
+from runscope_api.worker_registry import register_worker
 from runscope_contracts import EventEnvelope, LiveEvent
+from runscope_scheduler.service import schedule_once
 from runscope_worker.main import process_event
 from sqlalchemy import select
 
@@ -93,11 +96,17 @@ def test_create_run_executes_template_and_exposes_outputs(
 
         async def execute_from_outbox() -> None:
             async with SessionFactory() as session:
-                outbox = await session.scalar(select(OutboxMessage))
-                assert outbox is not None
-                event = EventEnvelope.model_validate(outbox.envelope)
-            assert await process_event(event, store, FailingLiveBus())
-            assert not await process_event(event, store)
+                worker = await register_worker(session, "test-worker", 2, 2048)
+            async with SessionFactory() as session:
+                assert await schedule_once(session, get_settings()) == 1
+                outboxes = list((await session.scalars(select(OutboxMessage))).all())
+                event = next(
+                    EventEnvelope.model_validate(item.envelope)
+                    for item in outboxes
+                    if item.envelope["event_type"] == "run.assigned"
+                )
+            assert await process_event(event, store, FailingLiveBus(), worker.id)
+            assert not await process_event(event, store, worker_id=worker.id)
 
         asyncio.run(execute_from_outbox())
         completed = client.get(f"/api/v1/runs/{run_id}", headers=headers).json()

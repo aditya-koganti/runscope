@@ -133,3 +133,32 @@ export interface RunComparison {
   items: RunComparisonItem[];
   best_by_metric: Record<string, string>;
 }
+
+export interface Worker {
+  id: string;
+  name: string;
+  status: "ONLINE" | "OFFLINE" | "STALE";
+  total_cpu: number;
+  available_cpu: number;
+  total_memory_mb: number;
+  available_memory_mb: number;
+  current_run_count: number;
+  last_heartbeat_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResourceAllocation {
+  id: string;
+  run_id: string;
+  worker_id: string;
+  cpu: number;
+  memory_mb: number;
+  lease_expires_at: string;
+  released_at: string | null;
+}
+
+export interface WorkerDetail {
+  worker: Worker;
+  active_allocations: ResourceAllocation[];
+}

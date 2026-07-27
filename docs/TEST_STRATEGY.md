@@ -49,6 +49,20 @@
   retries an intentional failure to success, saves metadata, and compares the
   two successful runs.
 
+## Phase 8 verification snapshot
+
+- 100 Python tests pass. Scheduler coverage includes compatible assignment,
+  insufficient capacity, priority ordering, duplicate invocation, expired
+  leases, stale workers, and restart-safe reconciliation.
+- Frontend ESLint and TypeScript checks, 6 Vitest tests, and the production
+  Vite build pass with live overview and worker-capacity pages.
+- Alembic revision `0005` applied successfully to PostgreSQL. The nine-service
+  Compose topology runs a separate scheduler and two independently identified
+  workers.
+- The real Chromium workflow passed through scheduler assignment and targeted
+  worker execution, then rendered both workers. Four workflow allocations were
+  persisted and all four released; both workers returned to full capacity.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,

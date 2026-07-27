@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     broker_topic: str = "runscope.events.v1"
     outbox_dispatcher_enabled: bool = True
     outbox_poll_seconds: float = 0.5
+    scheduler_poll_seconds: float = 0.5
+    allocation_lease_seconds: int = 30
+    worker_stale_seconds: int = 15
+    worker_name: str = "worker-local-1"
+    worker_total_cpu: float = 4.0
+    worker_total_memory_mb: int = 8192
+    worker_heartbeat_seconds: float = 3.0
     s3_endpoint_url: str = "http://localhost:9000"
     s3_access_key: str = "runscope-local"
     s3_secret_key: str = "change-me-local-only"
