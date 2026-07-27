@@ -6,6 +6,7 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("RUNSCOPE_DATABASE_URL", "sqlite+aiosqlite://")
+os.environ.setdefault("RUNSCOPE_OUTBOX_DISPATCHER_ENABLED", "false")
 
 from runscope_api.db import Base, engine  # noqa: E402
 from runscope_api.main import create_app  # noqa: E402

@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://runscope:runscope-local@localhost:5432/runscope"
     redis_url: str = "redis://localhost:6379/0"
     broker_bootstrap_servers: str = "localhost:19092"
+    broker_topic: str = "runscope.events.v1"
+    outbox_dispatcher_enabled: bool = True
+    outbox_poll_seconds: float = 0.5
     s3_endpoint_url: str = "http://localhost:9000"
     s3_access_key: str = "runscope-local"
     s3_secret_key: str = "change-me-local-only"

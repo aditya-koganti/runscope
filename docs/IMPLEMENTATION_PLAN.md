@@ -2,12 +2,12 @@
 
 ## Delivery status
 
-Phases 0 through 4 are complete as of 2026-07-26. The current vertical slice
+Phases 0 through 5 are complete as of 2026-07-26. The current vertical slice
 uses PostgreSQL-backed run records, a trusted versioned Iris classifier, the
-central lifecycle state machine, durable logs/metrics/events, local artifact
-storage behind an abstraction, and a Playwright-verified browser workflow.
-Execution is deliberately synchronous until Phase 5 introduces the broker and
-separate worker.
+central lifecycle state machine, durable logs/metrics/events, MinIO artifacts,
+and a Playwright-verified browser workflow. Run submission now uses a
+transactional outbox, Redpanda, a separate idempotent worker, and REST polling
+as the pre-SSE fallback.
 
 ## Phase 0 — Planning
 

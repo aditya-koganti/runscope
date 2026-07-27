@@ -12,6 +12,17 @@
 - Alembic revision `0003` was applied against PostgreSQL and the trusted
   template was seeded successfully.
 
+## Phase 5 verification snapshot
+
+- 93 Python tests pass across API, contracts, and worker, including duplicate
+  event consumption as a durable no-op.
+- Alembic revision `0004` was applied to PostgreSQL.
+- The composed API, Redpanda, worker, and MinIO path completed real training and
+  an authenticated artifact request through Playwright.
+- A read-only database check recorded four published outbox messages, four
+  processed-message records, and durable artifact metadata after repeated test
+  runs. These are local verification counts, not benchmark results.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,

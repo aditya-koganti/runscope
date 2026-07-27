@@ -1,5 +1,6 @@
+import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,13 +14,25 @@ from runscope_api.config import get_settings
 from runscope_api.errors import AppError, app_error_handler
 from runscope_api.logging import configure_logging
 from runscope_api.middleware import CorrelationIdMiddleware
+from runscope_api.outbox import run_outbox_dispatcher
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     configure_logging(settings.log_level)
-    yield
+    dispatcher = (
+        asyncio.create_task(run_outbox_dispatcher(settings))
+        if settings.outbox_dispatcher_enabled
+        else None
+    )
+    try:
+        yield
+    finally:
+        if dispatcher:
+            dispatcher.cancel()
+            with suppress(asyncio.CancelledError):
+                await dispatcher
 
 
 def create_app() -> FastAPI:

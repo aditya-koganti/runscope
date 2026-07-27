@@ -5,9 +5,10 @@ trusted machine-learning workloads.
 
 The current working vertical slice lets a researcher sign in, create a project
 and experiment, configure a schema-validated trusted Iris random-forest
-template, execute real scikit-learn training, inspect lifecycle events/logs/real
-metrics, and download the model, metric JSON, and SVG chart artifacts. RunScope
-never accepts arbitrary Python or shell commands.
+template, submit through a PostgreSQL outbox and Redpanda, execute real
+scikit-learn training in a separate worker, inspect lifecycle
+events/logs/metrics, and download MinIO-backed model, metric JSON, and SVG chart
+artifacts. RunScope never accepts arbitrary Python or shell commands.
 
 ## Demonstration workflow
 

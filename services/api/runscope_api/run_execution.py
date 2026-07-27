@@ -1,15 +1,21 @@
 import asyncio
 import hashlib
 import logging
+from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID, uuid4
 
 from pydantic import ValidationError
+from runscope_contracts import EventEnvelope
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from runscope_api.config import get_settings
 from runscope_api.errors import AppError
+from runscope_api.middleware import correlation_id_context
 from runscope_api.models import (
     Artifact,
+    OutboxMessage,
     Run,
     RunLog,
     RunMetric,
@@ -66,14 +72,13 @@ def validate_parameters(
     return validated, validated.model_dump(mode="json")
 
 
-async def create_and_execute_run(
+async def create_queued_run(
     session: AsyncSession,
-    artifact_store: ArtifactStore,
     body: RunCreate,
-    created_by: Any,
+    created_by: UUID,
 ) -> Run:
     template = await find_template(session, body.template_key, body.template_version)
-    validated, parameters = validate_parameters(template, body.parameters)
+    _, parameters = validate_parameters(template, body.parameters)
     run = Run(
         experiment_id=body.experiment_id,
         template_id=template.id,
@@ -91,14 +96,58 @@ async def create_and_execute_run(
         RunParameter(run_id=run.id, name=name, value=value) for name, value in parameters.items()
     )
     transition_run(session, run, RunStatus.QUEUED, "run.queued")
-    transition_run(session, run, RunStatus.SCHEDULING, "run.scheduling")
+    event = EventEnvelope(
+        event_id=uuid4(),
+        event_type="run.submitted",
+        occurred_at=datetime.now(UTC),
+        correlation_id=correlation_id_context.get(),
+        run_id=run.id,
+        payload={
+            "template_key": template.key,
+            "template_version": template.version,
+            "requested_cpu": run.requested_cpu,
+            "requested_memory_mb": run.requested_memory_mb,
+            "priority": run.priority,
+        },
+    )
+    session.add(
+        OutboxMessage(
+            topic=get_settings().broker_topic,
+            partition_key=str(run.id),
+            envelope=event.model_dump(mode="json"),
+        )
+    )
+    await session.commit()
+    await session.refresh(run)
+    return run
+
+
+async def execute_existing_run(
+    session: AsyncSession,
+    artifact_store: ArtifactStore,
+    run_id: UUID,
+) -> Run | None:
+    run = await session.get(Run, run_id)
+    if run is None or run.status != RunStatus.QUEUED:
+        return run
+    template = await session.get(TrainingTemplate, run.template_id)
+    if template is None:
+        raise RuntimeError("Run references a missing training template")
+    parameters = {
+        parameter.name: parameter.value
+        for parameter in (
+            await session.scalars(select(RunParameter).where(RunParameter.run_id == run.id))
+        ).all()
+    }
+    validated, _ = validate_parameters(template, parameters)
     transition_run(
         session,
         run,
-        RunStatus.RUNNING,
-        "run.started",
-        {"execution_mode": "synchronous-local"},
+        RunStatus.SCHEDULING,
+        "run.scheduling",
+        {"execution_mode": "background-worker"},
     )
+    transition_run(session, run, RunStatus.RUNNING, "run.started")
     await session.commit()
 
     definition = registry.get(template.key, template.version)
@@ -119,11 +168,7 @@ async def create_and_execute_run(
         )
         for generated in result.artifacts:
             storage_key = f"{run.id}/{generated.name}"
-            await artifact_store.put(
-                storage_key,
-                generated.data,
-                generated.mime_type,
-            )
+            await artifact_store.put(storage_key, generated.data, generated.mime_type)
             session.add(
                 Artifact(
                     run_id=run.id,

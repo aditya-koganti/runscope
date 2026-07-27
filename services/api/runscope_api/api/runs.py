@@ -19,7 +19,7 @@ from runscope_api.models import (
     RunStatus,
     TrainingTemplate,
 )
-from runscope_api.run_execution import create_and_execute_run
+from runscope_api.run_execution import create_queued_run
 from runscope_api.schemas.common import Page
 from runscope_api.schemas.runs import (
     ArtifactResponse,
@@ -84,10 +84,9 @@ async def create_run(
     body: RunCreate,
     user: ResearcherUser,
     session: Annotated[AsyncSession, Depends(get_session)],
-    artifact_store: Annotated[ArtifactStore, Depends(get_artifact_store)],
 ) -> Run:
     await get_experiment_or_404(session, body.experiment_id)
-    return await create_and_execute_run(session, artifact_store, body, user.id)
+    return await create_queued_run(session, body, user.id)
 
 
 @router.get("/runs", response_model=Page[RunResponse])

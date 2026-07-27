@@ -73,3 +73,14 @@ run as `RUNNING`. This proves validation, lifecycle, persistence, and artifacts
 without hiding them behind messaging. The execution service is isolated so
 Phase 5 can move the same trusted registry into a separate worker. Synchronous
 execution is not presented as the final operational architecture.
+
+## ADR-010: API-hosted outbox dispatcher with worker-side deduplication
+
+**Status:** Accepted for the local educational topology.
+
+Submission stores the versioned envelope and `QUEUED` transition atomically.
+The API lifespan dispatcher publishes unpublished rows to Redpanda with bounded
+backoff. Workers commit Kafka offsets only after handling an event and record
+the `(event_id, consumer_name)` pair. A crash after work but before the
+deduplication write is still safe because the worker re-reads terminal run
+state. A dedicated outbox deployment would be preferable at larger scale.

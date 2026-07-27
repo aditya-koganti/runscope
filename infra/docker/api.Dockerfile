@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY services/api ./services/api
+COPY services/worker ./services/worker
 COPY packages/contracts ./packages/contracts
 
 FROM runtime AS development

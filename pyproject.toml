@@ -41,7 +41,11 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["services/api/runscope_api", "packages/contracts/runscope_contracts"]
+packages = [
+  "services/api/runscope_api",
+  "services/worker/runscope_worker",
+  "packages/contracts/runscope_contracts",
+]
 
 [tool.ruff]
 target-version = "py312"
@@ -54,8 +58,8 @@ select = ["E", "F", "I", "UP", "B", "ASYNC"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-packages = ["runscope_api", "runscope_contracts"]
-mypy_path = ["services/api", "packages/contracts"]
+packages = ["runscope_api", "runscope_worker", "runscope_contracts"]
+mypy_path = ["services/api", "services/worker", "packages/contracts"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]

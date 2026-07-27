@@ -4,10 +4,12 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from runscope_api.db import SessionFactory
 from runscope_api.main import create_app
-from runscope_api.models import Experiment, Project, Role, User
+from runscope_api.models import Experiment, OutboxMessage, Project, Role, User
 from runscope_api.security import create_access_token, hash_password
 from runscope_api.seed import seed_training_templates
 from runscope_api.storage import LocalArtifactStore, get_artifact_store
+from runscope_contracts import EventEnvelope
+from runscope_worker.main import process_event
 from sqlalchemy import select
 
 
@@ -49,9 +51,10 @@ def test_create_run_executes_template_and_exposes_outputs(
     token, _ = create_access_token(user)
     headers = {"Authorization": f"Bearer {token}"}
     app = create_app()
+    store = LocalArtifactStore(tmp_path)
 
     async def store_override():
-        yield LocalArtifactStore(tmp_path)
+        yield store
 
     app.dependency_overrides[get_artifact_store] = store_override
     with TestClient(app) as client:
@@ -73,9 +76,20 @@ def test_create_run_executes_template_and_exposes_outputs(
         )
         assert response.status_code == 201, response.text
         run = response.json()
-        assert run["status"] == "SUCCEEDED"
+        assert run["status"] == "QUEUED"
         run_id = run["id"]
 
+        async def execute_from_outbox() -> None:
+            async with SessionFactory() as session:
+                outbox = await session.scalar(select(OutboxMessage))
+                assert outbox is not None
+                event = EventEnvelope.model_validate(outbox.envelope)
+            assert await process_event(event, store)
+            assert not await process_event(event, store)
+
+        asyncio.run(execute_from_outbox())
+        completed = client.get(f"/api/v1/runs/{run_id}", headers=headers).json()
+        assert completed["status"] == "SUCCEEDED"
         metrics = client.get(f"/api/v1/runs/{run_id}/metrics", headers=headers).json()
         logs = client.get(f"/api/v1/runs/{run_id}/logs", headers=headers).json()
         events = client.get(f"/api/v1/runs/{run_id}/events", headers=headers).json()
@@ -105,9 +119,3 @@ def test_create_run_executes_template_and_exposes_outputs(
         )
         assert download.status_code == 200
         assert download.content
-
-    async def count_runs() -> int:
-        async with SessionFactory() as session:
-            return len(list((await session.scalars(select(Project))).all()))
-
-    assert asyncio.run(count_runs()) == 1

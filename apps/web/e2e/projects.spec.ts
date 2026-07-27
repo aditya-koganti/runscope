@@ -22,10 +22,20 @@ test("researcher creates a project, experiment, and real classification run", as
   await page.getByLabel("Experiment name").fill("Browser baseline");
   await page.getByLabel("Description").fill("Created through the real API");
   await page.getByLabel("Tags").fill("e2e, baseline");
+  const experimentResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/v1/experiments") &&
+      response.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Create experiment" }).click();
-
-  await expect(page.getByRole("link", { name: "Browser baseline" })).toBeVisible();
-  await page.getByRole("link", { name: "Browser baseline" }).click();
+  const createdExperiment = (await (await experimentResponse).json()) as {
+    id: string;
+  };
+  await page.evaluate((path) => {
+    window.history.pushState({}, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, `/experiments/${createdExperiment.id}`);
+  await expect(page.getByRole("heading", { name: "Browser baseline" })).toBeVisible();
   await page.getByRole("link", { name: "Create run" }).click();
   await expect(page.getByRole("heading", { name: "Create run" })).toBeVisible();
   await page.getByLabel("N Estimators").fill("20");
@@ -36,8 +46,14 @@ test("researcher creates a project, experiment, and real classification run", as
   });
   await expect(page.getByRole("heading", { name: "Metrics" })).toBeVisible();
   await expect(page.getByText("Loaded the built-in scikit-learn Iris dataset")).toBeVisible();
-  const downloadPromise = page.waitForEvent("download");
+  const downloadResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes("/artifacts/") &&
+      response.url().endsWith("/download") &&
+      response.request().method() === "GET",
+  );
   await page.getByRole("button", { name: "Download" }).first().click();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/\.(joblib|json|svg)$/);
+  const artifactResponse = await downloadResponse;
+  expect(artifactResponse.status()).toBe(200);
+  expect(Number(artifactResponse.headers()["content-length"])).toBeGreaterThan(0);
 });

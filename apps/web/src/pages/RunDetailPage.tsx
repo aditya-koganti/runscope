@@ -27,6 +27,12 @@ export function RunDetailPage() {
   const run = useQuery({
     queryKey: ["run", runId],
     queryFn: () => request<Run>(`/runs/${runId}`),
+    refetchInterval: (query) =>
+      ["SUCCEEDED", "FAILED", "CANCELLED"].includes(
+        query.state.data?.status ?? "",
+      )
+        ? false
+        : 1_000,
   });
   const experiment = useQuery({
     queryKey: ["experiment", run.data?.experiment_id],
@@ -36,6 +42,7 @@ export function RunDetailPage() {
   const metrics = useQuery({
     queryKey: ["run-metrics", runId],
     queryFn: () => request<RunMetric[]>(`/runs/${runId}/metrics`),
+    refetchInterval: 2_000,
   });
   const parameters = useQuery({
     queryKey: ["run-parameters", runId],
@@ -44,14 +51,17 @@ export function RunDetailPage() {
   const logs = useQuery({
     queryKey: ["run-logs", runId],
     queryFn: () => request<RunLog[]>(`/runs/${runId}/logs`),
+    refetchInterval: 2_000,
   });
   const events = useQuery({
     queryKey: ["run-events", runId],
     queryFn: () => request<RunEvent[]>(`/runs/${runId}/events`),
+    refetchInterval: 2_000,
   });
   const artifacts = useQuery({
     queryKey: ["run-artifacts", runId],
     queryFn: () => request<Artifact[]>(`/runs/${runId}/artifacts`),
+    refetchInterval: 2_000,
   });
 
   return (
