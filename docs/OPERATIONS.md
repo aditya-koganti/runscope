@@ -88,3 +88,19 @@ claimed as tested. See `docs/KUBERNETES.md`.
 Locust read/SSE and opt-in trusted-submission scenarios are documented under
 `tests/load`. The dated local baseline and its scope are in
 `docs/PERFORMANCE.md`.
+
+## Reproducible utilities
+
+`python scripts/demo.py` drives only the public API and only the registered Iris
+template. It uses finite HTTP/polling timeouts and creates uniquely named local
+demo records. Credentials can be overridden with `RUNSCOPE_DEMO_EMAIL` and
+`RUNSCOPE_DEMO_PASSWORD`.
+
+`python scripts/verify.py` runs the supported format, lint, type, unit, frontend
+build, and Compose configuration gates. Add `--with-e2e` when the migrated and
+seeded Compose stack is already running. The script stops at the first failed
+gate and returns its exit code.
+
+`npm --prefix apps/web run screenshots` captures the documented sign-in,
+overview, successful-run, worker, and dependency-health screens from a running
+seeded stack.

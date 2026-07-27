@@ -101,6 +101,19 @@
   disclose dependency metadata; equivalent blocking CI gates are configured
   but not claimed as executed.
 
+## Phase 11 verification snapshot
+
+- `scripts/demo.py` passed against the real Compose API. Its registered Iris run
+  traversed `QUEUED`, `SCHEDULING`, `RUNNING`, and `SUCCEEDED`, then returned
+  four metrics and three artifact records.
+- The reproducible screenshot utility captured sign-in, populated overview,
+  successful run detail, two online workers, and six healthy dependency probes.
+- The final clean-equivalent gate reruns Python formatting/lint, strict mypy,
+  107 pytest tests, frontend lint/types, 7 Vitest tests, the Vite build, Compose
+  configuration, and the Chromium workflow from committed source.
+- Local documentation links, tracked-file secret patterns, placeholders/TODOs,
+  whitespace, and the final diff are checked before the phase commit.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,

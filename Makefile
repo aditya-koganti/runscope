@@ -1,4 +1,4 @@
-.PHONY: setup dev stop clean test test-backend test-frontend test-e2e lint format security migrate seed demo logs load-test load-test-mutations kubernetes-render
+.PHONY: setup dev stop clean test test-backend test-frontend test-e2e lint format security migrate seed demo verify verify-e2e screenshots logs load-test load-test-mutations kubernetes-render
 
 setup:
 	python -m pip install -e ".[dev]"
@@ -45,6 +45,15 @@ seed:
 
 demo:
 	python scripts/demo.py
+
+verify:
+	python scripts/verify.py
+
+verify-e2e:
+	python scripts/verify.py --with-e2e
+
+screenshots:
+	cd apps/web && npm run screenshots
 
 logs:
 	docker compose logs --follow --tail=200

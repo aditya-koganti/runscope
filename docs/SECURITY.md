@@ -29,7 +29,7 @@ or arbitrary datasets.
 ## Secrets and sensitive data
 
 - Configuration is environment-based; `.env` is ignored and `.env.example`
-  contains placeholders only.
+  contains explicitly local-only example values, not deployable secrets.
 - Logs redact authorization, cookie, password, token, and secret fields.
 - Structured exception logs retain the exception type for diagnosis but omit
   exception text that could contain connection strings or other sensitive data.
@@ -52,6 +52,11 @@ The 2026-07-27 frontend dependency review upgraded the application to React
 executed `npm audit --audit-level=high` reported zero vulnerabilities. The
 frontend container rebuild uses `npm ci`, so the audited lockfile is also the
 build input.
+
+The final dependency review also removed unused `python-multipart` and NumPy
+direct declarations from the production dependency set and moved `httpx` to
+development tooling. scikit-learn retains its own required numerical
+dependencies transitively; application code does not import NumPy directly.
 
 Python dependency auditing is configured as a blocking CI job. A local
 `pip-audit` execution was not performed because this environment did not permit

@@ -18,15 +18,16 @@ the `runscope` namespace:
 
 Create the namespace and a secret outside source control. The secret must
 contain `RUNSCOPE_DATABASE_URL`, `RUNSCOPE_S3_ACCESS_KEY`,
-`RUNSCOPE_S3_SECRET_KEY`, and a random `RUNSCOPE_JWT_SECRET`:
+`RUNSCOPE_S3_SECRET_KEY`, and a random `RUNSCOPE_JWT_SECRET`. Set those four
+shell variables from the target environment's secret manager, then:
 
 ```bash
 kubectl apply -f infra/kubernetes/namespace.yaml
 kubectl -n runscope create secret generic runscope-secrets \
-  --from-literal=RUNSCOPE_DATABASE_URL='postgresql+asyncpg://USER:PASSWORD@postgresql:5432/runscope' \
-  --from-literal=RUNSCOPE_S3_ACCESS_KEY='REPLACE_ME' \
-  --from-literal=RUNSCOPE_S3_SECRET_KEY='REPLACE_ME' \
-  --from-literal=RUNSCOPE_JWT_SECRET='REPLACE_WITH_A_RANDOM_VALUE'
+  --from-literal=RUNSCOPE_DATABASE_URL="$RUNSCOPE_DATABASE_URL" \
+  --from-literal=RUNSCOPE_S3_ACCESS_KEY="$RUNSCOPE_S3_ACCESS_KEY" \
+  --from-literal=RUNSCOPE_S3_SECRET_KEY="$RUNSCOPE_S3_SECRET_KEY" \
+  --from-literal=RUNSCOPE_JWT_SECRET="$RUNSCOPE_JWT_SECRET"
 ```
 
 Build the two images and load or publish them for the target cluster. The base

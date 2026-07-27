@@ -1,74 +1,320 @@
 # RunScope
 
 RunScope is a self-service experiment and CPU job-management platform for small,
-trusted machine-learning workloads.
+trusted machine-learning workloads. It demonstrates the control-plane and
+execution-plane problems behind an ML platform—durable state, scheduling,
+idempotent messaging, live telemetry, artifacts, cancellation, and recovery—
+without pretending to be a production cluster manager.
 
-The current working vertical slice lets a researcher sign in, create a project
-and experiment, configure a schema-validated trusted Iris random-forest
-template, submit through a PostgreSQL outbox and Redpanda, execute real
-scikit-learn training in a separate worker, inspect lifecycle
-events/logs/metrics, and download MinIO-backed model, metric JSON, and SVG chart
-artifacts. A second trusted template demonstrates live progress, cooperative
-cancellation, intentional failure, parent-child retry lineage, notes/tags, and
-two-to-five-run comparison. A separate scheduler assigns queued work across two
-heartbeating local workers using CPU/memory capacity and database-backed leases.
-An authenticated operations view reports dependency latency, scheduler
-heartbeat, durable queue/outbox backlog, and worker capacity; the API also
-exports Prometheus-compatible metrics and stable correlation-aware errors.
-RunScope never accepts arbitrary Python or shell commands.
+The complete workflow runs locally with React, FastAPI, PostgreSQL, Redis,
+Redpanda, MinIO, a separate scheduler, and two workers. RunScope never accepts
+arbitrary Python, shell commands, container images, or pickle uploads.
 
-## Demonstration workflow
+![A completed RunScope Iris classification with metrics, lifecycle, artifacts, and logs](docs/assets/runscope-run-detail.png)
 
-1. Start the stack and seed the local data.
-2. Sign in as the researcher.
-3. Create a project and experiment.
-4. Select **Iris random-forest classification**, review its bounded parameters,
-   and submit.
-5. Open the completed run to inspect its state timeline, metrics chart,
-   parameters, logs, and downloadable artifacts.
-6. Submit **Slow progress demonstration** and cancel it while it is running.
-7. Submit another slow run with intentional failure enabled, then retry it.
-8. Save notes/tags and compare the successful classification and retry runs.
-9. Open **Workers** to inspect heartbeat age, free capacity, utilization, and
-   active leases.
-10. Open **Platform health** to inspect dependency probes, queue depth, outbox
-    backlog, and allocatable capacity.
+## What it demonstrates
 
-## Foundation setup
+- Local JWT sign-in with viewer, researcher, and administrator roles.
+- Project and experiment CRUD with search, filters, sorting, and pagination.
+- A static registry of versioned, schema-validated training templates.
+- Real scikit-learn Iris random-forest training in a separate worker.
+- A bounded slow template for progress, cancellation, controlled failure, and
+  retry lineage.
+- A centralized, transactionally enforced run state machine.
+- PostgreSQL outbox publication to Redpanda and idempotent consumption.
+- CPU/memory-aware priority scheduling across two heartbeating workers.
+- Expiring resource leases and restart reconciliation.
+- Redis-backed authenticated SSE with event IDs and REST recovery.
+- Durable logs, metrics, lifecycle events, notes, tags, and MinIO artifacts.
+- Successful-run comparison, worker capacity, platform health, and Prometheus
+  metrics.
+- Non-root production images, GitHub Actions gates, Kubernetes reference
+  manifests, and measured Locust smoke tests.
 
-The target runtime is Python 3.12 and Node 22.22 or newer.
+## Product boundary
 
-```bash
-cp .env.example .env
-make setup
-make test
-docker compose up --build
+RunScope executes only code registered in its trusted template registry. User
+input is data validated by Pydantic; it cannot select modules, filesystem paths,
+commands, dependencies, or images.
+
+RunScope is not a GPU scheduler, HPC queue, distributed-training system,
+autoscaler, or production multi-tenant platform. It models a deliberately small
+CPU worker pool so that its persistence and reliability behavior stays visible.
+
+## Architecture
+
+PostgreSQL is the source of truth. Messages announce committed state; they do
+not replace transactions.
+
+```mermaid
+flowchart LR
+    Browser["React browser"] -->|same-origin REST + SSE| Web["Nginx web gateway"]
+    Web --> API["FastAPI control plane"]
+    API --> DB[("PostgreSQL")]
+    API --> Redis[("Redis live events")]
+    API --> S3[("MinIO artifacts")]
+    DB --> Outbox["Bounded outbox dispatcher"]
+    Outbox --> Broker[("Redpanda")]
+    Scheduler["Priority scheduler"] --> DB
+    Scheduler --> Broker
+    Broker --> Workers["Trusted worker pool"]
+    Workers --> DB
+    Workers --> Redis
+    Workers --> S3
 ```
 
-On Windows without GNU Make, run the underlying commands shown in `Makefile`.
-The API documentation is available at `http://localhost:8000/docs`; the web app
-uses `http://localhost:5173`.
+```mermaid
+sequenceDiagram
+    actor Researcher
+    participant API
+    participant DB as PostgreSQL
+    participant Outbox
+    participant Scheduler
+    participant Broker as Redpanda
+    participant Worker
+    participant Artifacts as MinIO
 
-## Local demonstration credentials
+    Researcher->>API: Submit registered template + validated parameters
+    API->>DB: Commit QUEUED run and outbox envelope
+    Outbox->>Broker: Publish run.submitted
+    Scheduler->>DB: Lock run and reserve worker lease
+    Scheduler->>Broker: Publish run.assigned
+    Broker->>Worker: Deliver assignment at least once
+    Worker->>DB: Re-read run + lease; transition RUNNING
+    Worker-->>DB: Persist logs, metrics, and lifecycle events
+    Worker->>Artifacts: Upload bounded artifacts
+    Worker->>DB: Commit SUCCEEDED and release capacity
+    API-->>Researcher: SSE notification with REST as recovery
+```
 
-These accounts are for the isolated local Compose environment only. Run
-`make migrate` and `make seed` before signing in.
+The lifecycle contract is centralized and covered for every valid and invalid
+state/status pair:
 
-| Role | Email | Password |
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> QUEUED
+    QUEUED --> SCHEDULING
+    SCHEDULING --> RUNNING
+    SCHEDULING --> QUEUED: lease recovery
+    RUNNING --> SUCCEEDED
+    RUNNING --> FAILED
+    RUNNING --> CANCELLING
+    CANCELLING --> CANCELLED
+    FAILED --> RETRYING
+    RETRYING --> QUEUED: child run
+```
+
+See [Architecture](docs/ARCHITECTURE.md),
+[Data model](docs/DATA_MODEL.md), and
+[Architecture decisions](docs/DECISIONS.md) for the detailed contracts and
+tradeoffs.
+
+## Technology
+
+| Layer | Implementation |
+| --- | --- |
+| Web | React 19, React Router 8, TanStack Query, Recharts, Vite 7 |
+| API | Python 3.12, FastAPI, Pydantic, SQLAlchemy async |
+| Persistence | PostgreSQL 16, Alembic |
+| Messaging | Redpanda/Kafka, versioned Pydantic envelopes, transactional outbox |
+| Live updates | Redis pub/sub, authenticated streaming fetch, REST polling |
+| Artifacts | MinIO through an S3-compatible `ArtifactStore` interface |
+| Scheduling | Separate priority scheduler, worker heartbeats, expiring leases |
+| ML | scikit-learn random forest over the built-in Iris dataset |
+| Validation | pytest, mypy, Ruff, Vitest, ESLint, Playwright, Locust |
+| Delivery | Docker Compose, non-root images, GitHub Actions, Kustomize |
+
+## Quick start
+
+Requirements:
+
+- Docker Desktop with Compose;
+- Python 3.12 and Node 22.22+ for host-side development commands;
+- GNU Make is optional.
+
+From the repository root:
+
+```bash
+docker compose up --build --detach
+docker compose exec -T api alembic -c services/api/alembic.ini upgrade head
+docker compose exec -T api python -m runscope_api.cli seed
+```
+
+Open:
+
+- Web UI: `http://localhost:5173`
+- OpenAPI: `http://localhost:8000/docs`
+- API liveness: `http://localhost:8000/api/v1/health`
+- API readiness: `http://localhost:8000/api/v1/ready`
+- MinIO console: `http://localhost:9001`
+
+The checked-in Compose values are local-only demonstration credentials.
+`.env.example` documents optional overrides; keep the copied `.env` untracked.
+
+### Demonstration accounts
+
+These users exist only after the explicit seed command:
+
+| Role | Email | Local-only password |
 | --- | --- | --- |
 | Viewer | `viewer@runscope.dev` | `ViewerDemo123!` |
 | Researcher | `researcher@runscope.dev` | `ResearcherDemo123!` |
 | Administrator | `admin@runscope.dev` | `AdminDemo123!` |
 
-RunScope authentication is intentionally demonstrative, not an enterprise
-identity system. See `docs/SECURITY.md`.
+### Run the bounded API demo
 
-See [Product requirements](docs/PRODUCT_REQUIREMENTS.md),
-[Architecture](docs/ARCHITECTURE.md), and the
-[Implementation plan](docs/IMPLEMENTATION_PLAN.md). Deployment and validation
-details are in [Kubernetes](docs/KUBERNETES.md),
-[Performance](docs/PERFORMANCE.md), [Security](docs/SECURITY.md), and
+Install development dependencies with `make setup` (or the equivalent commands
+in the Makefile), then:
+
+```bash
+python scripts/demo.py
+```
+
+The script signs in as the local researcher, creates a uniquely named project
+and experiment, submits the registered Iris template, follows the durable run
+state with finite polling, and reports the metric/artifact counts. It never
+sends code or commands.
+
+## Browser workflow
+
+1. Sign in as the researcher.
+2. Create a project and an experiment.
+3. Select **Iris random-forest classification** and submit bounded parameters.
+4. Watch the scheduler assign a worker and the live connection receive updates.
+5. Inspect the lifecycle, metrics, logs, parameters, and downloadable artifacts.
+6. Run **Slow progress demonstration**, cancel it, and observe the safe
+   cancellation checkpoint.
+7. Intentionally fail a slow run, retry it as a child run, and save notes/tags.
+8. Compare two successful runs.
+9. Inspect worker capacity and dependency health.
+
+![RunScope dependency probes and durable capacity summary](docs/assets/runscope-platform-health.png)
+
+Additional captures: [sign-in](docs/assets/runscope-sign-in.png),
+[overview](docs/assets/runscope-overview.png), and
+[workers](docs/assets/runscope-workers.png). Recreate them against a running,
+seeded stack with:
+
+```bash
+cd apps/web
+npm run screenshots
+```
+
+## API surface
+
+All JSON endpoints use `/api/v1`, snake_case fields, validated inputs, stable
+error codes, and correlation IDs.
+
+| Area | Representative routes |
+| --- | --- |
+| Identity | `POST /auth/sign-in`, `GET /auth/me` |
+| Projects | `GET/POST /projects`, `GET/PATCH/DELETE /projects/{id}` |
+| Experiments | `GET/POST /experiments`, `GET/PATCH/DELETE /experiments/{id}` |
+| Runs | `GET/POST /runs`, cancel, retry, metadata, comparison |
+| Run data | logs, metrics, events, artifacts, downloads, authenticated SSE |
+| Workers | list/detail, registration, heartbeat |
+| Operations | health, readiness, dependency detail, summary, Prometheus metrics |
+
+The full behavior is documented in [API design](docs/API_DESIGN.md) and
+[event contracts](docs/EVENT_CONTRACTS.md).
+
+## Verification
+
+The portable verification runner assumes the target Python/Node dependencies
+are installed:
+
+```bash
+python scripts/verify.py
+python scripts/verify.py --with-e2e  # with the seeded Compose stack running
+```
+
+The final local verification on 2026-07-27 recorded:
+
+| Gate | Result |
+| --- | --- |
+| Python 3.12 | Ruff format/lint passed; strict mypy passed |
+| Backend | 107 pytest tests passed |
+| Frontend | ESLint and TypeScript passed; 7 Vitest tests passed |
+| Build | Vite production build passed; both production images built |
+| Services | Compose config passed; all 9 services started |
+| Browser | 1 Chromium workflow passed in 24.2 s |
+| Kubernetes | 10/10 resources passed Kubernetes 1.29 schema validation |
+| Node audit | `npm audit --audit-level=high`: 0 vulnerabilities |
+| Hygiene | diff/secret-pattern scans passed |
+
+Python dependency and image scanning are blocking CI jobs but were not reported
+as locally passing because this environment did not permit disclosing dependency
+metadata to external scanners. GitHub Actions is configured, not claimed as
+executed.
+
+## Measured local performance
+
+The short Docker Desktop baseline is a smoke test, not a capacity claim:
+
+| Scenario | Load | Observations | Failures | Key result |
+| --- | --- | ---: | ---: | --- |
+| Read + SSE | 5 users, 30 s | 106 | 0 | aggregate p50 18 ms, p95 57 ms |
+| Submit + schedule | 2 users, 20 s | 55 | 0 | assignment p50 460 ms, p95 680 ms |
+
+The environment exposed 8 CPUs and about 3.58 GiB to the nine-service topology.
+See [Performance](docs/PERFORMANCE.md) for per-route results, dataset state, and
+caveats.
+
+## Deployment references
+
+- Docker Compose is the verified local topology.
+- Production API and web images run as non-root users.
+- The web image proxies `/api/` and unbuffered SSE through one browser origin.
+- `infra/kubernetes` renders API, web, scheduler, a two-worker StatefulSet, and
+  a migration Job; secrets and stateful services stay external.
+- All ten Kubernetes resources validate against Kubernetes 1.29 schemas. No
+  cluster deployment is claimed.
+
+See [Kubernetes](docs/KUBERNETES.md) and
 [Operations](docs/OPERATIONS.md).
 
-RunScope deliberately does not support GPU scheduling, HPC workloads,
-distributed training, arbitrary Python, or arbitrary shell commands.
+## Repository map
+
+```text
+apps/web/                 React UI, Vitest, Playwright, screenshot utility
+services/api/             FastAPI control plane, models, migrations, templates
+services/scheduler/       Priority scheduling, leases, reconciliation
+services/worker/          Registered-template execution and durable completion
+packages/contracts/       Versioned event and live-update envelopes
+infra/docker/             Development and non-root production images
+infra/kubernetes/         Kustomize reference deployment
+scripts/                  Bounded demo and verification runners
+tests/load/               Read/SSE and opt-in mutation Locust scenarios
+docs/                     Product, architecture, security, operations, evidence
+```
+
+## Security and limitations
+
+Passwords are Argon2-hashed, access tokens are short-lived, authorization is
+enforced server-side, public 500 responses are stable, logs redact sensitive
+keys, storage retries are finite, and message consumers assume duplicate
+delivery.
+
+This remains a local educational system. It does not provide OIDC/SSO, MFA,
+tenant isolation, TLS, network policy, HA dependencies, backups, quotas,
+autoscaling, preemption, fairness, malware controls, or a production security
+review. The frontend keeps its access token in memory, and the demo passwords
+must never be reused outside an isolated local environment.
+
+See [Security](docs/SECURITY.md) and [Limitations](docs/LIMITATIONS.md).
+
+## Documentation
+
+- [Product requirements](docs/PRODUCT_REQUIREMENTS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data model and lifecycle](docs/DATA_MODEL.md)
+- [API design](docs/API_DESIGN.md)
+- [Event contracts](docs/EVENT_CONTRACTS.md)
+- [Test strategy and verification evidence](docs/TEST_STRATEGY.md)
+- [Operations](docs/OPERATIONS.md)
+- [Performance](docs/PERFORMANCE.md)
+- [Security](docs/SECURITY.md)
+- [Kubernetes reference](docs/KUBERNETES.md)
+- [Architecture decisions](docs/DECISIONS.md)
+- [Implementation phases](docs/IMPLEMENTATION_PLAN.md)

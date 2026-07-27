@@ -2,7 +2,7 @@
 
 ## Delivery status
 
-Phases 0 through 10 are complete as of 2026-07-27. The current vertical slice
+Phases 0 through 11 are complete as of 2026-07-27. The current vertical slice
 uses PostgreSQL-backed run records, a trusted versioned Iris classifier, the
 central lifecycle state machine, durable logs/metrics/events, MinIO artifacts,
 and a Playwright-verified browser workflow. Run submission uses a
@@ -19,6 +19,11 @@ Production images now run without root, the web image provides a same-origin
 API/SSE gateway, CI covers code, dependencies, images, secrets, and the browser
 workflow, Kubernetes reference manifests validate against 1.29 schemas, and
 measured Locust smoke baselines document control-plane and assignment latency.
+The public README now ties the product boundary to architecture, execution
+sequence, state machine, setup, evidence, measured results, and limitations.
+Bounded demo, verification, and screenshot utilities reproduce the main claims;
+captured screens show the real seeded stack, and unused production dependency
+declarations have been removed.
 
 ## Phase 0 — Planning
 

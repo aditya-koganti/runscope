@@ -12,7 +12,8 @@ flowchart LR
     API --> DB[(PostgreSQL)]
     API --> Redis[(Redis)]
     API --> S3[(MinIO)]
-    API --> Broker[(Redpanda)]
+    API --> Outbox[Transactional outbox]
+    Outbox --> Broker[(Redpanda)]
     Scheduler[Scheduler] --> DB
     Scheduler --> Broker
     Scheduler --> Redis
@@ -59,13 +60,15 @@ sequenceDiagram
     participant U as Researcher
     participant A as API
     participant D as PostgreSQL
+    participant X as Outbox dispatcher
     participant S as Scheduler
     participant B as Redpanda
     participant W as Worker
     participant O as MinIO
     U->>A: Submit validated run
-    A->>D: Create QUEUED run and event
-    A->>B: run.submitted
+    A->>D: Commit QUEUED run and outbox envelope
+    X->>D: Read unpublished envelope
+    X->>B: Publish run.submitted with bounded retries
     S->>D: Lock queued run and allocate lease
     S->>B: run.assigned
     B->>W: Assignment
@@ -78,8 +81,8 @@ sequenceDiagram
 
 ## Deployment topology
 
-Docker Compose is the primary development topology. Kubernetes manifests model
-separate web, API, scheduler, worker, and migration workloads and reference
-externalized secrets. Bundled PostgreSQL, Redis, Redpanda, and MinIO manifests
-are for local demonstration only.
-
+Docker Compose is the primary development topology and supplies local-only
+PostgreSQL, Redis, Redpanda, and MinIO services. Kubernetes manifests model
+separate web, API, scheduler, worker, and migration workloads, reference
+externalized secrets, and deliberately leave stateful dependencies to the
+operator.

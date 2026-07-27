@@ -11,3 +11,4 @@ apps/web/dist
 .artifacts
 playwright-report
 test-results
+docs/assets
