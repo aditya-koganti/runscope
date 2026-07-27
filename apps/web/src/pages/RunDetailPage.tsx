@@ -14,6 +14,7 @@ import type {
   RunMetric,
   RunParameter,
 } from "../domain/types";
+import { useRunStream } from "../hooks/useRunStream";
 
 function formatDate(value: string | null) {
   return value ? new Date(value).toLocaleString() : "—";
@@ -22,6 +23,7 @@ function formatDate(value: string | null) {
 export function RunDetailPage() {
   const { runId = "" } = useParams();
   const { accessToken } = useAuth();
+  const streamState = useRunStream(runId, accessToken);
   const request = <T,>(path: string) =>
     apiRequest<T>(path, {}, accessToken ?? undefined);
   const run = useQuery({
@@ -42,7 +44,7 @@ export function RunDetailPage() {
   const metrics = useQuery({
     queryKey: ["run-metrics", runId],
     queryFn: () => request<RunMetric[]>(`/runs/${runId}/metrics`),
-    refetchInterval: 2_000,
+    refetchInterval: 5_000,
   });
   const parameters = useQuery({
     queryKey: ["run-parameters", runId],
@@ -51,17 +53,17 @@ export function RunDetailPage() {
   const logs = useQuery({
     queryKey: ["run-logs", runId],
     queryFn: () => request<RunLog[]>(`/runs/${runId}/logs`),
-    refetchInterval: 2_000,
+    refetchInterval: 5_000,
   });
   const events = useQuery({
     queryKey: ["run-events", runId],
     queryFn: () => request<RunEvent[]>(`/runs/${runId}/events`),
-    refetchInterval: 2_000,
+    refetchInterval: 5_000,
   });
   const artifacts = useQuery({
     queryKey: ["run-artifacts", runId],
     queryFn: () => request<Artifact[]>(`/runs/${runId}/artifacts`),
-    refetchInterval: 2_000,
+    refetchInterval: 5_000,
   });
 
   return (
@@ -87,6 +89,9 @@ export function RunDetailPage() {
             </div>
             <span className={`status-badge status-${run.data.status.toLowerCase()}`}>
               {run.data.status}
+            </span>
+            <span className={`stream-indicator stream-${streamState}`}>
+              Live: {streamState}
             </span>
           </div>
           {run.data.failure_message ? (

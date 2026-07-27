@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -29,6 +30,7 @@ from runscope_api.storage import ArtifactStore
 from runscope_api.templates.registry import registry
 
 logger = logging.getLogger(__name__)
+LivePublisher = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 
 async def find_template(session: AsyncSession, key: str, version: str) -> TrainingTemplate:
@@ -126,6 +128,7 @@ async def execute_existing_run(
     session: AsyncSession,
     artifact_store: ArtifactStore,
     run_id: UUID,
+    publish_live: LivePublisher | None = None,
 ) -> Run | None:
     run = await session.get(Run, run_id)
     if run is None or run.status != RunStatus.QUEUED:
@@ -149,6 +152,8 @@ async def execute_existing_run(
     )
     transition_run(session, run, RunStatus.RUNNING, "run.started")
     await session.commit()
+    if publish_live:
+        await publish_live("run.status", {"status": RunStatus.RUNNING.value})
 
     definition = registry.get(template.key, template.version)
     try:
@@ -187,6 +192,21 @@ async def execute_existing_run(
             {"metric_count": len(result.metrics), "artifact_count": len(result.artifacts)},
         )
         await session.commit()
+        if publish_live:
+            for sequence, (level, message) in enumerate(result.logs, start=1):
+                await publish_live(
+                    "run.log",
+                    {"sequence_number": sequence, "level": level, "message": message},
+                )
+            for name, value in result.metrics.items():
+                await publish_live(
+                    "run.metric",
+                    {"name": name, "value": value, "step": 1},
+                )
+            await publish_live(
+                "run.status",
+                {"status": RunStatus.SUCCEEDED.value},
+            )
     except Exception:
         logger.exception(
             "Trusted training-template execution failed", extra={"run_id": str(run.id)}
@@ -200,5 +220,13 @@ async def execute_existing_run(
         transition_run(session, failed_run, RunStatus.FAILED, "run.failed")
         await session.commit()
         run = failed_run
+        if publish_live:
+            await publish_live(
+                "run.status",
+                {
+                    "status": RunStatus.FAILED.value,
+                    "failure_code": failed_run.failure_code,
+                },
+            )
     await session.refresh(run)
     return run

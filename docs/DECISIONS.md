@@ -84,3 +84,13 @@ backoff. Workers commit Kafka offsets only after handling an event and record
 the `(event_id, consumer_name)` pair. A crash after work but before the
 deduplication write is still safe because the worker re-reads terminal run
 state. A dedicated outbox deployment would be preferable at larger scale.
+
+## ADR-011: Redis/SSE is best-effort over durable REST state
+
+**Status:** Accepted.
+
+Worker live publishes are deliberately outside the durable transaction and
+cannot fail a run. The browser consumes SSE with an Authorization header through
+streaming `fetch`, deduplicates event IDs, reconnects after disconnect, and
+keeps low-frequency REST polling. Heartbeats keep intermediaries from silently
+closing idle streams. Redis loss reduces responsiveness but not correctness.

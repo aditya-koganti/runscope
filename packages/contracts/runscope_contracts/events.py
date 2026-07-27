@@ -18,3 +18,15 @@ class EventEnvelope(BaseModel):
     run_id: UUID | None = None
     worker_id: UUID | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class LiveEvent(BaseModel):
+    """Ephemeral Redis/SSE notification; durable data remains in PostgreSQL."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event_id: UUID
+    event_type: str = Field(min_length=3, max_length=100)
+    occurred_at: datetime
+    run_id: UUID
+    payload: dict[str, Any] = Field(default_factory=dict)

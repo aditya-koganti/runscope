@@ -1,5 +1,7 @@
+from collections.abc import AsyncIterator
 from pathlib import Path
-from uuid import uuid4
+from typing import Any
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 from runscope_api.db import SessionFactory
@@ -8,9 +10,19 @@ from runscope_api.models import Experiment, OutboxMessage, Project, Role, User
 from runscope_api.security import create_access_token, hash_password
 from runscope_api.seed import seed_training_templates
 from runscope_api.storage import LocalArtifactStore, get_artifact_store
-from runscope_contracts import EventEnvelope
+from runscope_contracts import EventEnvelope, LiveEvent
 from runscope_worker.main import process_event
 from sqlalchemy import select
+
+
+class FailingLiveBus:
+    async def publish(self, run_id: UUID, event_type: str, payload: dict[str, Any]) -> LiveEvent:
+        raise ConnectionError("Redis unavailable in controlled test")
+
+    async def subscribe(self, run_id: UUID) -> AsyncIterator[LiveEvent]:
+        del run_id
+        if False:
+            yield
 
 
 async def seed_run_context() -> tuple[User, Experiment]:
@@ -84,7 +96,7 @@ def test_create_run_executes_template_and_exposes_outputs(
                 outbox = await session.scalar(select(OutboxMessage))
                 assert outbox is not None
                 event = EventEnvelope.model_validate(outbox.envelope)
-            assert await process_event(event, store)
+            assert await process_event(event, store, FailingLiveBus())
             assert not await process_event(event, store)
 
         asyncio.run(execute_from_outbox())

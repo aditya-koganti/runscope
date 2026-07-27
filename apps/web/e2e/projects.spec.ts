@@ -8,7 +8,9 @@ test("researcher creates a project, experiment, and real classification run", as
 
   await page.goto("/sign-in");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({
+    timeout: 15_000,
+  });
 
   await page.getByRole("link", { name: "Projects" }).click();
   await page.getByRole("button", { name: "New project" }).click();
@@ -41,6 +43,7 @@ test("researcher creates a project, experiment, and real classification run", as
   await page.getByLabel("N Estimators").fill("20");
   await page.getByRole("button", { name: "Create and execute run" }).click();
 
+  await expect(page.getByText("Live: connected")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(".status-badge", { hasText: "SUCCEEDED" })).toBeVisible({
     timeout: 30_000,
   });

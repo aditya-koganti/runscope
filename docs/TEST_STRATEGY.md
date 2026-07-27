@@ -23,6 +23,18 @@
   processed-message records, and durable artifact metadata after repeated test
   runs. These are local verification counts, not benchmark results.
 
+## Phase 6 verification snapshot
+
+- The Python gate remains at 93 passing tests, including a controlled Redis
+  failure that still reaches durable `SUCCEEDED`.
+- Frontend lint/type checks, 6 Vitest tests, and the production build pass.
+- Playwright observes `Live: connected`, receives the worker-driven completion,
+  renders logs/metrics, and verifies the authenticated artifact response.
+- The first integration attempt intentionally informed the final design:
+  missing Redis previously exposed that an ephemeral publish could interrupt
+  work. The dependency graph and worker error boundary now prevent that class of
+  failure.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,

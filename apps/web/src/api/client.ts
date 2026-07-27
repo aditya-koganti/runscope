@@ -1,5 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 
+export function apiUrl(path: string): string {
+  return `${API_URL}${path}`;
+}
+
 export interface ApiErrorBody {
   error?: {
     code?: string;
@@ -29,7 +33,7 @@ export async function apiRequest<T>(
   if (init.body) headers.set("Content-Type", "application/json");
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
-  const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+  const response = await fetch(apiUrl(path), { ...init, headers });
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
     throw new ApiError(
@@ -47,7 +51,7 @@ export async function downloadFile(
   filename: string,
   accessToken: string,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(apiUrl(path), {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!response.ok) {

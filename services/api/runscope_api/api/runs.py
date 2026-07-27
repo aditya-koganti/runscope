@@ -1,14 +1,17 @@
 import math
+from collections.abc import AsyncIterator
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi.responses import StreamingResponse
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from runscope_api.api.experiments import get_experiment_or_404
 from runscope_api.db import get_session
 from runscope_api.errors import AppError
+from runscope_api.live_events import LiveEventBus, get_live_event_bus
 from runscope_api.models import (
     Artifact,
     Run,
@@ -139,6 +142,37 @@ async def read_run(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Run:
     return await get_run_or_404(session, run_id)
+
+
+@router.get("/runs/{run_id}/stream", response_class=StreamingResponse)
+async def stream_run(
+    run_id: UUID,
+    request: Request,
+    _user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    live_bus: Annotated[LiveEventBus, Depends(get_live_event_bus)],
+) -> StreamingResponse:
+    await get_run_or_404(session, run_id)
+
+    async def events() -> AsyncIterator[str]:
+        yield "retry: 2000\n\n"
+        async for event in live_bus.subscribe(run_id):
+            if await request.is_disconnected():
+                break
+            yield (
+                f"id: {event.event_id}\n"
+                f"event: {event.event_type}\n"
+                f"data: {event.model_dump_json()}\n\n"
+            )
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/runs/{run_id}/parameters", response_model=list[RunParameterResponse])

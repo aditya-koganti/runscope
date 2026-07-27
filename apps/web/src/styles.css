@@ -673,6 +673,23 @@ tbody tr:hover {
   background: #171f38;
 }
 
+.stream-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  color: #8194aa;
+  font-size: 0.72rem;
+}
+
+.stream-connected {
+  color: #82dfc3;
+}
+
+.stream-reconnecting,
+.stream-offline {
+  color: #f2b36d;
+}
+
 .run-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.5fr);
