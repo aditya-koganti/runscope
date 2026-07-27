@@ -31,13 +31,18 @@ The API returns 400 for malformed commands, 401 for missing/invalid identity,
 | Templates | `GET /templates`, `GET /templates/{key}` |
 | Runs | `GET/POST /runs`, `GET /runs/{id}`, `POST /runs/{id}/cancel`, `POST /runs/{id}/retry`, `PATCH /runs/{id}/metadata`, `POST /runs/compare` |
 | Run data | `GET /runs/{id}/logs`, `/metrics`, `/events`, `/artifacts`, `/stream`; `GET /runs/{id}/artifacts/{artifact_id}/download` |
+| Workers | `GET /workers`, `GET /workers/{id}`, `POST /workers/register`, `POST /workers/{id}/heartbeat` |
+| Platform | `GET /health`, `/ready`, `/platform/dependencies`, `/platform/summary`, `/metrics` |
 
 `GET /runs/{id}/stream` is an authenticated `text/event-stream` response. The
 web client uses streaming fetch rather than putting JWTs in query strings. Live
 event IDs are deduplicated client-side; REST resources remain the recovery
 contract.
-| Workers | `GET /workers`, `GET /workers/{id}`, `POST /workers/register`, `POST /workers/{id}/heartbeat` |
-| Platform | `GET /health`, `/ready`, `/platform/dependencies`, `/platform/summary`, `/metrics` |
+
+`GET /health`, `/ready`, and `/metrics` are operational endpoints without bearer
+authentication. Dependency detail and platform summary require an authenticated
+viewer, researcher, or administrator. Unexpected errors return a stable
+`internal_error` body and never expose internal exception messages.
 
 ## Command rules
 

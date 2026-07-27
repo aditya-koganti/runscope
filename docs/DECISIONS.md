@@ -127,3 +127,25 @@ extend their lease expiries. Scheduler reconciliation marks stale workers,
 requeues work that never started, fails running work whose worker vanished, and
 releases capacity transactionally. Completed, failed, and cancelled execution
 paths also release their allocations before committing final state.
+
+## ADR-015: Health signals are bounded views over durable state
+
+**Status:** Accepted.
+
+Liveness proves only that the API process responds. Readiness runs concurrent,
+two-second probes for PostgreSQL, Redis, Redpanda, and MinIO and returns 503 when
+a required dependency is unavailable. Scheduler heartbeat is reported in the
+authenticated dependency view but does not make the API itself unready.
+Prometheus labels use route templates rather than user-controlled paths, while
+run, queue, worker, and outbox gauges are refreshed from PostgreSQL on scrape.
+
+## ADR-016: Retry infrastructure boundaries, not domain commands
+
+**Status:** Accepted.
+
+S3-compatible artifact operations use a configurable finite exponential retry
+wrapper and end in a stable `ArtifactStorageError`. The outbox records bounded
+publish attempts and the exception type, without persisting credentials or
+exception messages. Domain commands are not blindly replayed; durable state,
+optimistic concurrency, and consumer deduplication remain their safety
+mechanisms.

@@ -2,7 +2,7 @@
 
 ## Delivery status
 
-Phases 0 through 8 are complete as of 2026-07-26. The current vertical slice
+Phases 0 through 9 are complete as of 2026-07-27. The current vertical slice
 uses PostgreSQL-backed run records, a trusted versioned Iris classifier, the
 central lifecycle state machine, durable logs/metrics/events, MinIO artifacts,
 and a Playwright-verified browser workflow. Run submission uses a
@@ -11,7 +11,10 @@ as the recovery path under authenticated Redis-backed SSE. A second bounded
 template demonstrates honest progress, durable cancellation checkpoints,
 controlled failure, retry lineage, metadata, and successful-run comparison.
 Queued work is now assigned by a separate priority scheduler using worker
-heartbeats, CPU/memory capacity, and expiring PostgreSQL leases.
+heartbeats, CPU/memory capacity, and expiring PostgreSQL leases. The control
+plane exposes bounded dependency probes, a durable platform summary, and
+Prometheus metrics; storage and broker failures use finite retries, errors keep
+stable public contracts, and structured logs redact sensitive key variants.
 
 ## Phase 0 — Planning
 

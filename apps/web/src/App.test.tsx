@@ -184,3 +184,80 @@ test("creates a project through the protected form", async () => {
 
   expect(await screen.findByRole("link", { name: "Forecasting" })).toBeInTheDocument();
 });
+
+test("renders dependency and backlog health for an authenticated viewer", async () => {
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const url = String(input);
+    if (url.endsWith("/auth/sign-in")) {
+      return new Response(
+        JSON.stringify({
+          access_token: "test-token",
+          token_type: "bearer",
+          expires_in: 1800,
+          user: {
+            id: "019f9dc7-2f4c-7ec0-ac91-9652cd845c33",
+            email: "viewer@runscope.dev",
+            role: "viewer",
+            created_at: "2026-07-26T00:00:00Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    if (url.endsWith("/platform/dependencies")) {
+      return new Response(
+        JSON.stringify({
+          status: "healthy",
+          dependencies: {
+            api: { status: "healthy", latency_ms: 0 },
+            postgresql: { status: "healthy", latency_ms: 1.25 },
+            scheduler: { status: "healthy", latency_ms: 2.5 },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    if (url.endsWith("/platform/summary")) {
+      return new Response(
+        JSON.stringify({
+          active_runs: 1,
+          queued_runs: 2,
+          failed_runs: 0,
+          successful_runs: 3,
+          success_rate: 1,
+          average_duration_seconds: 4.2,
+          workers_online: 2,
+          workers_total: 2,
+          available_cpu: 6,
+          total_cpu: 8,
+          available_memory_mb: 12288,
+          total_memory_mb: 16384,
+          queue_depth: 2,
+          unpublished_messages: 1,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    if (url.includes("/runs?")) {
+      return new Response(
+        JSON.stringify({ items: [], page: 1, page_size: 8, total: 0, pages: 0 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(JSON.stringify({ status: "ok", service: "api" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+  const user = userEvent.setup();
+  renderApp("/sign-in");
+  await user.click(screen.getByRole("button", { name: "Sign in" }));
+  await screen.findByRole("heading", { name: "Overview" });
+
+  await user.click(screen.getByRole("link", { name: "Platform health" }));
+
+  expect(await screen.findByRole("heading", { name: "Platform health" })).toBeInTheDocument();
+  expect(screen.getByText("scheduler", { exact: true })).toBeInTheDocument();
+  expect(screen.getByText("2.50 ms probe latency")).toBeInTheDocument();
+  expect(screen.getByText("awaiting Redpanda")).toBeInTheDocument();
+});

@@ -14,7 +14,10 @@ stored in source. Demo defaults are explicitly local-only.
 
 ## Service behavior
 
-- API exposes liveness, readiness, dependency health, and Prometheus metrics.
+- API exposes process liveness at `/api/v1/health`, required-dependency
+  readiness at `/api/v1/ready`, authenticated detailed dependency health at
+  `/api/v1/platform/dependencies`, a durable control-plane summary at
+  `/api/v1/platform/summary`, and Prometheus metrics at `/api/v1/metrics`.
 - Scheduler and worker emit structured JSON logs and heartbeat health.
 - Correlation IDs enter at HTTP or message boundaries and propagate through
   logs/events.
@@ -46,3 +49,9 @@ Workers use stable `RUNSCOPE_WORKER_NAME` values. CPU and memory declarations
 are allocatable educational capacity, not operating-system isolation. The
 default heartbeat is every three seconds; leases expire after 30 seconds and a
 worker becomes stale after 15 seconds without a heartbeat.
+
+Artifact-store retry count/base delay and the outbox attempt ceiling are
+configured with `RUNSCOPE_STORAGE_MAX_ATTEMPTS`,
+`RUNSCOPE_STORAGE_RETRY_BASE_SECONDS`, and `RUNSCOPE_OUTBOX_MAX_ATTEMPTS`.
+Retries are finite. Exhausted unpublished messages remain durable and visible in
+the platform summary for operator investigation.

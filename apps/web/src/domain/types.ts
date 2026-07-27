@@ -162,3 +162,28 @@ export interface WorkerDetail {
   worker: Worker;
   active_allocations: ResourceAllocation[];
 }
+
+export interface DependencyHealth {
+  status: "healthy" | "degraded";
+  dependencies: Record<
+    string,
+    { status: "healthy" | "unavailable"; latency_ms: number }
+  >;
+}
+
+export interface PlatformSummary {
+  active_runs: number;
+  queued_runs: number;
+  failed_runs: number;
+  successful_runs: number;
+  success_rate: number;
+  average_duration_seconds: number | null;
+  workers_online: number;
+  workers_total: number;
+  available_cpu: number;
+  total_cpu: number;
+  available_memory_mb: number;
+  total_memory_mb: number;
+  queue_depth: number;
+  unpublished_messages: number;
+}

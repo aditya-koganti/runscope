@@ -8,6 +8,7 @@ from runscope_api.config import get_settings
 from runscope_api.db import SessionFactory
 from runscope_api.live_events import LiveEventBus, build_live_event_bus
 from runscope_api.logging import configure_logging
+from runscope_api.middleware import correlation_id_context
 from runscope_api.models import ProcessedMessage
 from runscope_api.run_execution import execute_existing_run
 from runscope_api.storage import ArtifactStore, build_artifact_store
@@ -31,6 +32,21 @@ async def process_event(
         or event.worker_id is None
         or (worker_id is not None and event.worker_id != worker_id)
     ):
+        return False
+    correlation_token = correlation_id_context.set(event.correlation_id)
+    try:
+        return await process_assignment(event, store, live_bus, worker_id)
+    finally:
+        correlation_id_context.reset(correlation_token)
+
+
+async def process_assignment(
+    event: EventEnvelope,
+    store: ArtifactStore,
+    live_bus: LiveEventBus | None,
+    worker_id: UUID | None,
+) -> bool:
+    if event.run_id is None or event.worker_id is None:
         return False
     run_id = event.run_id
     active_worker_id = worker_id or event.worker_id

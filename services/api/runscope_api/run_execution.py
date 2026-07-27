@@ -29,7 +29,7 @@ from runscope_api.models import (
 )
 from runscope_api.schemas.runs import RunCreate
 from runscope_api.state_machine import transition_run
-from runscope_api.storage import ArtifactStore
+from runscope_api.storage import ArtifactStorageError, ArtifactStore
 from runscope_api.templates.registry import registry
 from runscope_api.templates.slow_demo import SlowDemoParameters
 from runscope_api.worker_registry import release_allocation
@@ -238,7 +238,7 @@ async def execute_existing_run(
                 "run.status",
                 {"status": RunStatus.SUCCEEDED.value},
             )
-    except Exception:
+    except Exception as exc:
         logger.exception(
             "Trusted training-template execution failed", extra={"run_id": str(run.id)}
         )
@@ -246,8 +246,12 @@ async def execute_existing_run(
         failed_run = await session.get(Run, run.id)
         if failed_run is None:
             raise
-        failed_run.failure_code = "template_execution_failed"
-        failed_run.failure_message = "Trusted template execution failed"
+        if isinstance(exc, ArtifactStorageError):
+            failed_run.failure_code = "artifact_upload_failed"
+            failed_run.failure_message = "Artifact storage remained unavailable"
+        else:
+            failed_run.failure_code = "template_execution_failed"
+            failed_run.failure_message = "Trusted template execution failed"
         transition_run(session, failed_run, RunStatus.FAILED, "run.failed")
         await release_allocation(session, failed_run.id)
         await session.commit()
@@ -370,7 +374,30 @@ async def execute_slow_run(
         indent=2,
     ).encode()
     storage_key = f"{run.id}/progress.json"
-    await artifact_store.put(storage_key, artifact_data, "application/json")
+    try:
+        await artifact_store.put(storage_key, artifact_data, "application/json")
+    except ArtifactStorageError:
+        run.failure_code = "artifact_upload_failed"
+        run.failure_message = "Artifact storage remained unavailable"
+        transition_run(
+            session,
+            run,
+            RunStatus.FAILED,
+            "run.failed",
+            {"retryable": True, "reason": "artifact_storage"},
+        )
+        await release_allocation(session, run.id)
+        await session.commit()
+        if publish_live:
+            await publish_live(
+                "run.status",
+                {
+                    "status": RunStatus.FAILED.value,
+                    "failure_code": run.failure_code,
+                },
+            )
+        await session.refresh(run)
+        return run
     session.add(
         Artifact(
             run_id=run.id,

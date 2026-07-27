@@ -3,15 +3,18 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-SENSITIVE_KEYS = frozenset(
-    {"authorization", "cookie", "password", "password_hash", "secret", "token"}
-)
+SENSITIVE_KEYS = frozenset({"authorization", "cookie", "password", "secret", "token"})
+
+
+def is_sensitive_key(key: str) -> bool:
+    normalized = key.lower().replace("-", "_")
+    return any(fragment in normalized for fragment in SENSITIVE_KEYS)
 
 
 def redact(value: Any) -> Any:
     if isinstance(value, dict):
         return {
-            key: "[REDACTED]" if key.lower() in SENSITIVE_KEYS else redact(item)
+            key: "[REDACTED]" if is_sensitive_key(key) else redact(item)
             for key, item in value.items()
         }
     if isinstance(value, list):
@@ -27,9 +30,29 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for key in ("correlation_id", "run_id", "worker_id", "event_type"):
+        for key in (
+            "correlation_id",
+            "run_id",
+            "worker_id",
+            "user_id",
+            "event_type",
+            "outbox_id",
+            "attempt",
+            "assigned_count",
+            "method",
+            "path",
+            "status_code",
+            "error_code",
+        ):
             if value := getattr(record, key, None):
                 data[key] = value
+        if "correlation_id" not in data:
+            from runscope_api.middleware import correlation_id_context
+
+            if correlation_id := correlation_id_context.get():
+                data["correlation_id"] = correlation_id
+        if isinstance(record.exc_info, tuple) and record.exc_info[1]:
+            data["exception_type"] = type(record.exc_info[1]).__name__
         return json.dumps(redact(data), default=str, separators=(",", ":"))
 
 

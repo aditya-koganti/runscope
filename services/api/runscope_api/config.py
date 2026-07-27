@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     broker_topic: str = "runscope.events.v1"
     outbox_dispatcher_enabled: bool = True
     outbox_poll_seconds: float = 0.5
+    outbox_max_attempts: int = Field(default=10, ge=1, le=100)
     scheduler_poll_seconds: float = 0.5
     allocation_lease_seconds: int = 30
     worker_stale_seconds: int = 15
@@ -32,6 +33,8 @@ class Settings(BaseSettings):
     s3_bucket: str = "runscope-artifacts"
     artifact_backend: str = "local"
     local_artifact_dir: str = ".artifacts"
+    storage_max_attempts: int = Field(default=3, ge=1, le=10)
+    storage_retry_base_seconds: float = Field(default=0.1, ge=0, le=10)
     jwt_secret: str = "change-me-local-development-only"
     jwt_issuer: str = "runscope"
     access_token_minutes: int = 30

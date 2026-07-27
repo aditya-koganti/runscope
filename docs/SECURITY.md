@@ -31,9 +31,13 @@ or arbitrary datasets.
 - Configuration is environment-based; `.env` is ignored and `.env.example`
   contains placeholders only.
 - Logs redact authorization, cookie, password, token, and secret fields.
+- Structured exception logs retain the exception type for diagnosis but omit
+  exception text that could contain connection strings or other sensitive data.
 - Broker payloads and metrics labels contain no credentials.
 - MinIO keys and database credentials are never returned by public endpoints.
 - Artifact names are normalized and downloads use safe attachment headers.
+- Public 500 responses use a stable message and correlation ID rather than
+  exposing internal exception details.
 
 ## Known risks
 

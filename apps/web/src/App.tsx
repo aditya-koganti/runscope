@@ -8,6 +8,7 @@ import { CompareRunsPage } from "./pages/CompareRunsPage";
 import { CreateRunPage } from "./pages/CreateRunPage";
 import { ExperimentsPage } from "./pages/ExperimentsPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { PlatformHealthPage } from "./pages/PlatformHealthPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { SignInPage } from "./pages/SignInPage";
@@ -24,6 +25,7 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route path="/overview" element={<OverviewPage />} />
+            <Route path="/platform-health" element={<PlatformHealthPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/experiments" element={<ExperimentsPage />} />

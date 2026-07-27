@@ -943,6 +943,34 @@ tbody tr:hover {
   background: #2b171c;
 }
 
+.dependency-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dependency-card {
+  padding: 1rem;
+}
+
+.dependency-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-transform: capitalize;
+}
+
+.dependency-card p {
+  margin: 0.75rem 0 0;
+  font-size: 0.76rem;
+}
+
+.health-metrics {
+  margin-top: 1rem;
+}
+
 @media (max-width: 820px) {
   .auth-panel {
     grid-template-columns: 1fr;
@@ -975,6 +1003,10 @@ tbody tr:hover {
   }
 
   .worker-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dependency-grid {
     grid-template-columns: 1fr;
   }
 

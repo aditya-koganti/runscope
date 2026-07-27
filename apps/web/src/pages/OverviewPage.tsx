@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { apiRequest } from "../api/client";
 import { useAuth } from "../auth/authState";
-import type { Page, Run, Worker } from "../domain/types";
+import type { Page, PlatformSummary, Run } from "../domain/types";
 
 interface Health {
   status: "ok";
@@ -26,26 +26,47 @@ export function OverviewPage() {
       ),
     refetchInterval: 5_000,
   });
-  const workers = useQuery({
-    queryKey: ["overview-workers"],
+  const summary = useQuery({
+    queryKey: ["platform-summary"],
     queryFn: () =>
-      apiRequest<Worker[]>("/workers", {}, accessToken ?? undefined),
+      apiRequest<PlatformSummary>(
+        "/platform/summary",
+        {},
+        accessToken ?? undefined,
+      ),
     refetchInterval: 5_000,
   });
   const runItems = Array.isArray(runs.data?.items) ? runs.data.items : [];
-  const workerItems = Array.isArray(workers.data) ? workers.data : [];
   const metrics = [
+    ["Active runs", summary.data?.active_runs ?? 0, "currently executing"],
+    ["Queue depth", summary.data?.queue_depth ?? 0, "waiting for capacity"],
+    ["Failed runs", summary.data?.failed_runs ?? 0, "durable failures"],
     [
-      "Active runs",
-      runItems.filter((run) =>
-        ["SCHEDULING", "RUNNING", "CANCELLING"].includes(run.status),
-      ).length,
+      "Success rate",
+      `${((summary.data?.success_rate ?? 0) * 100).toFixed(1)}%`,
+      "terminal runs",
     ],
-    ["Queued runs", runItems.filter((run) => run.status === "QUEUED").length],
-    ["Failed runs", runItems.filter((run) => run.status === "FAILED").length],
+    [
+      "Average duration",
+      summary.data?.average_duration_seconds == null
+        ? "—"
+        : `${summary.data.average_duration_seconds.toFixed(1)}s`,
+      "completed runs",
+    ],
     [
       "Workers online",
-      workerItems.filter((worker) => worker.status === "ONLINE").length,
+      `${summary.data?.workers_online ?? 0}/${summary.data?.workers_total ?? 0}`,
+      "fresh heartbeats",
+    ],
+    [
+      "Available CPU",
+      (summary.data?.available_cpu ?? 0).toFixed(1),
+      `of ${(summary.data?.total_cpu ?? 0).toFixed(1)} cores`,
+    ],
+    [
+      "Outbox backlog",
+      summary.data?.unpublished_messages ?? 0,
+      "unpublished events",
     ],
   ] as const;
 
@@ -70,11 +91,11 @@ export function OverviewPage() {
         </div>
       </div>
       <section className="metric-grid" aria-label="Run summary">
-        {metrics.map(([label, value]) => (
+        {metrics.map(([label, value, detail]) => (
           <article className="metric-card" key={label}>
             <span>{label}</span>
             <strong>{value}</strong>
-            <small>Live platform data</small>
+            <small>{detail}</small>
           </article>
         ))}
       </section>

@@ -12,8 +12,9 @@ from runscope_api.api.projects import router as projects_router
 from runscope_api.api.runs import router as runs_router
 from runscope_api.api.workers import router as workers_router
 from runscope_api.config import get_settings
-from runscope_api.errors import AppError, app_error_handler
+from runscope_api.errors import AppError, app_error_handler, unexpected_error_handler
 from runscope_api.logging import configure_logging
+from runscope_api.metrics import MetricsMiddleware
 from runscope_api.middleware import CorrelationIdMiddleware
 from runscope_api.outbox import run_outbox_dispatcher
 
@@ -52,7 +53,9 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "X-Correlation-ID"],
     )
     app.add_middleware(CorrelationIdMiddleware)
+    app.add_middleware(MetricsMiddleware)
     app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(Exception, unexpected_error_handler)
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(projects_router, prefix="/api/v1")

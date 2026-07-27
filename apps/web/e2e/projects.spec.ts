@@ -130,4 +130,11 @@ test("researcher completes the classification, cancellation, retry, and comparis
   await expect(page.getByRole("heading", { name: "Workers" })).toBeVisible();
   await expect(page.getByRole("link", { name: "worker-local-1" })).toBeVisible();
   await expect(page.getByRole("link", { name: "worker-local-2" })).toBeVisible();
+
+  await navigateInApp(page, "/platform-health");
+  await expect(page.getByRole("heading", { name: "Platform health" })).toBeVisible();
+  await expect(page.getByText("healthy", { exact: true }).first()).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText("scheduler", { exact: true })).toBeVisible();
 });

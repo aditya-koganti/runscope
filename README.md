@@ -12,6 +12,9 @@ artifacts. A second trusted template demonstrates live progress, cooperative
 cancellation, intentional failure, parent-child retry lineage, notes/tags, and
 two-to-five-run comparison. A separate scheduler assigns queued work across two
 heartbeating local workers using CPU/memory capacity and database-backed leases.
+An authenticated operations view reports dependency latency, scheduler
+heartbeat, durable queue/outbox backlog, and worker capacity; the API also
+exports Prometheus-compatible metrics and stable correlation-aware errors.
 RunScope never accepts arbitrary Python or shell commands.
 
 ## Demonstration workflow
@@ -28,6 +31,8 @@ RunScope never accepts arbitrary Python or shell commands.
 8. Save notes/tags and compare the successful classification and retry runs.
 9. Open **Workers** to inspect heartbeat age, free capacity, utilization, and
    active leases.
+10. Open **Platform health** to inspect dependency probes, queue depth, outbox
+    backlog, and allocatable capacity.
 
 ## Foundation setup
 

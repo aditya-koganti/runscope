@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -16,6 +17,7 @@ from runscope_api.security import (
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/sign-in", response_model=TokenResponse)
@@ -26,6 +28,7 @@ async def sign_in(
     user = await session.scalar(select(User).where(User.email == normalize_email(body.email)))
     if user is None or not verify_password(body.password, user.password_hash):
         raise AppError("invalid_credentials", "Email or password is incorrect", 401)
+    logger.info("Authentication succeeded", extra={"user_id": str(user.id)})
     token, expires_in = create_access_token(user)
     return TokenResponse(
         access_token=token, expires_in=expires_in, user=UserResponse.model_validate(user)

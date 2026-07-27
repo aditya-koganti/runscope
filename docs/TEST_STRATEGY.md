@@ -63,6 +63,21 @@
   worker execution, then rendered both workers. Four workflow allocations were
   persisted and all four released; both workers returned to full capacity.
 
+## Phase 9 verification snapshot
+
+- 107 Python tests pass under Python 3.12. They include bounded artifact retries,
+  temporary broker recovery, Redis-independent durable execution, secret-key
+  redaction, correlation isolation, stable unexpected-error responses, degraded
+  readiness, and Prometheus metric exposure.
+- Frontend ESLint and TypeScript checks pass; 7 Vitest tests and the production
+  Vite build pass. The platform-health component test covers dependency latency,
+  scheduler status, capacity, and outbox backlog.
+- `docker compose config --quiet` passes and all nine rebuilt services start.
+  PostgreSQL, Redis, Redpanda, MinIO, and the API reported healthy.
+- The real Chromium workflow passed in 21.7 seconds and exercised classification,
+  artifact download, cancellation, intentional failure/retry, comparison, both
+  workers, and the authenticated platform-health page.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,
