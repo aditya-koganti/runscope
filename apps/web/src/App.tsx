@@ -4,11 +4,13 @@ import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { ExperimentDetailPage } from "./pages/ExperimentDetailPage";
+import { CreateRunPage } from "./pages/CreateRunPage";
 import { ExperimentsPage } from "./pages/ExperimentsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { SignInPage } from "./pages/SignInPage";
+import { RunDetailPage } from "./pages/RunDetailPage";
 
 export function App() {
   return (
@@ -25,6 +27,11 @@ export function App() {
               path="/experiments/:experimentId"
               element={<ExperimentDetailPage />}
             />
+            <Route
+              path="/experiments/:experimentId/runs/new"
+              element={<CreateRunPage />}
+            />
+            <Route path="/runs/:runId" element={<RunDetailPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/overview" replace />} />

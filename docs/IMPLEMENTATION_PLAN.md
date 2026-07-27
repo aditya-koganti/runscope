@@ -1,5 +1,14 @@
 # Implementation Plan
 
+## Delivery status
+
+Phases 0 through 4 are complete as of 2026-07-26. The current vertical slice
+uses PostgreSQL-backed run records, a trusted versioned Iris classifier, the
+central lifecycle state machine, durable logs/metrics/events, local artifact
+storage behind an abstraction, and a Playwright-verified browser workflow.
+Execution is deliberately synchronous until Phase 5 introduces the broker and
+separate worker.
+
 ## Phase 0 — Planning
 
 Create permanent rules and initial product, architecture, model, API, event,
@@ -72,4 +81,3 @@ artifact semantics are the product core. Messaging precedes resource scheduling
 because the scheduler must assign work a worker can already consume. Kubernetes
 and load tests remain last because they should describe tested application
 behavior rather than determine it.
-

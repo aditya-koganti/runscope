@@ -63,3 +63,13 @@ Executable Playwright specs live in `apps/web/e2e` rather than root `tests/e2e`
 so Node resolves the web package's locked `@playwright/test` dependency without
 a second root dependency installation. Cross-service Python integration tests
 remain under root `tests/integration`.
+
+## ADR-009: Synchronous execution is a disposable vertical-slice adapter
+
+**Status:** Accepted.
+
+Phase 4 executes a trusted template inside the API request after persisting the
+run as `RUNNING`. This proves validation, lifecycle, persistence, and artifacts
+without hiding them behind messaging. The execution service is isolated so
+Phase 5 can move the same trusted registry into a separate worker. Synchronous
+execution is not presented as the final operational architecture.

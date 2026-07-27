@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../auth/authState";
 import { QueryState } from "../components/QueryState";
-import type { Experiment, Project } from "../domain/types";
+import type { Experiment, Page, Project, Run } from "../domain/types";
 
 export function ExperimentDetailPage() {
   const { experimentId = "" } = useParams();
@@ -28,6 +28,16 @@ export function ExperimentDetailPage() {
         accessToken ?? undefined,
       ),
   });
+  const runs = useQuery({
+    queryKey: ["runs", { experimentId }],
+    queryFn: () =>
+      apiRequest<Page<Run>>(
+        `/runs?experiment_id=${experimentId}&page_size=100`,
+        {},
+        accessToken ?? undefined,
+      ),
+  });
+  const bestRun = runs.data?.items.find((run) => run.status === "SUCCEEDED");
 
   return (
     <QueryState
@@ -62,27 +72,79 @@ export function ExperimentDetailPage() {
               </div>
             </div>
             {user?.role !== "viewer" ? (
-              <button className="button button-primary" disabled type="button">
-                Create run · next phase
-              </button>
+              <Link
+                className="button button-primary action-link"
+                to={`/experiments/${experimentId}/runs/new`}
+              >
+                Create run
+              </Link>
             ) : null}
           </div>
           <section className="metric-grid" aria-label="Experiment summary">
             <article className="metric-card">
               <span>Total runs</span>
-              <strong>0</strong>
-              <small>No run data yet</small>
+              <strong>{runs.data?.total ?? 0}</strong>
+              <small>Tracked executions</small>
             </article>
             <article className="metric-card">
-              <span>Best metric</span>
-              <strong>—</strong>
-              <small>Complete a run to compare</small>
+              <span>Successful run</span>
+              <strong>{bestRun ? "Yes" : "—"}</strong>
+              <small>{bestRun ? "Open it below" : "Complete a run to compare"}</small>
             </article>
           </section>
-          <section className="panel empty-state">
-            <h2>No runs in this experiment</h2>
-            <p>Registered training-template execution arrives in the next slice.</p>
+          <section className="section-heading">
+            <div>
+              <h2>Runs</h2>
+              <p>Training attempts and their recorded outcomes.</p>
+            </div>
           </section>
+          <QueryState
+            loading={runs.isPending}
+            error={runs.isError}
+            onRetry={() => void runs.refetch()}
+          >
+            {runs.data?.items.length ? (
+              <section className="panel table-panel">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Run</th>
+                      <th>Status</th>
+                      <th>Resources</th>
+                      <th>Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {runs.data.items.map((run) => (
+                      <tr key={run.id}>
+                        <td>
+                          <Link className="table-link" to={`/runs/${run.id}`}>
+                            {run.id.slice(0, 8)}
+                          </Link>
+                        </td>
+                        <td>
+                          <span
+                            className={`status-badge status-${run.status.toLowerCase()}`}
+                          >
+                            {run.status}
+                          </span>
+                        </td>
+                        <td>
+                          {run.requested_cpu} CPU · {run.requested_memory_mb} MB
+                        </td>
+                        <td>{new Date(run.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            ) : (
+              <section className="panel empty-state">
+                <h2>No runs in this experiment</h2>
+                <p>Create a run to train the trusted Iris classification template.</p>
+              </section>
+            )}
+          </QueryState>
         </>
       ) : null}
     </QueryState>

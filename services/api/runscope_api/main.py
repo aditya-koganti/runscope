@@ -8,6 +8,7 @@ from runscope_api.api.auth import router as auth_router
 from runscope_api.api.experiments import router as experiments_router
 from runscope_api.api.health import router as health_router
 from runscope_api.api.projects import router as projects_router
+from runscope_api.api.runs import router as runs_router
 from runscope_api.config import get_settings
 from runscope_api.errors import AppError, app_error_handler
 from runscope_api.logging import configure_logging
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(projects_router, prefix="/api/v1")
     app.include_router(experiments_router, prefix="/api/v1")
+    app.include_router(runs_router, prefix="/api/v1")
     return app
 
 

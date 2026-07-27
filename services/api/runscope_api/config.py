@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     s3_access_key: str = "runscope-local"
     s3_secret_key: str = "change-me-local-only"
     s3_bucket: str = "runscope-artifacts"
+    artifact_backend: str = "local"
+    local_artifact_dir: str = ".artifacts"
     jwt_secret: str = "change-me-local-development-only"
     jwt_issuer: str = "runscope"
     access_token_minutes: int = 30

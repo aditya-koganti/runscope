@@ -41,3 +41,22 @@ export async function apiRequest<T>(
   }
   return (await response.json()) as T;
 }
+
+export async function downloadFile(
+  path: string,
+  filename: string,
+  accessToken: string,
+): Promise<void> {
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new ApiError("Artifact download failed.", response.status);
+  }
+  const url = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

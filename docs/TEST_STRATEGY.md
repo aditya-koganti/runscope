@@ -1,5 +1,17 @@
 # Test Strategy
 
+## Phase 4 verification snapshot
+
+- 92 backend tests pass, including all state/status pairs, real scikit-learn
+  execution, model deserialization, authenticated artifact download, and the
+  full API run workflow.
+- 5 frontend component tests pass; ESLint, TypeScript, and the production build
+  pass.
+- Playwright verifies sign-in, project/experiment creation, real classification
+  completion, logs, metrics, and a browser download.
+- Alembic revision `0003` was applied against PostgreSQL and the trusted
+  template was seeded successfully.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,
@@ -30,4 +42,3 @@ Each phase runs the smallest complete relevant set plus formatting, lint, and
 type checks. Frontend changes require a production build. Infrastructure changes
 require `docker compose config`. Final verification runs all supported checks
 from a clean working state and records exact counts and skips.
-
