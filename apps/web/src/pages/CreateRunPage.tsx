@@ -163,25 +163,41 @@ export function CreateRunPage() {
                     <label htmlFor={`parameter-${name}`}>
                       {property.title ?? name.replaceAll("_", " ")}
                     </label>
-                    <input
-                      id={`parameter-${name}`}
-                      type={
-                        property.type === "integer" || property.type === "number"
-                          ? "number"
-                          : "text"
-                      }
-                      step={property.type === "integer" ? 1 : "any"}
-                      min={property.minimum}
-                      max={property.maximum}
-                      value={values[name] ?? String(property.default ?? "")}
-                      onChange={(event) =>
-                        setValues((current) => ({
-                          ...current,
-                          [name]: event.target.value,
-                        }))
-                      }
-                      required
-                    />
+                    {property.type === "boolean" ? (
+                      <select
+                        id={`parameter-${name}`}
+                        value={values[name] ?? String(property.default ?? false)}
+                        onChange={(event) =>
+                          setValues((current) => ({
+                            ...current,
+                            [name]: event.target.value,
+                          }))
+                        }
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    ) : (
+                      <input
+                        id={`parameter-${name}`}
+                        type={
+                          property.type === "integer" || property.type === "number"
+                            ? "number"
+                            : "text"
+                        }
+                        step={property.type === "integer" ? 1 : "any"}
+                        min={property.minimum}
+                        max={property.maximum}
+                        value={values[name] ?? String(property.default ?? "")}
+                        onChange={(event) =>
+                          setValues((current) => ({
+                            ...current,
+                            [name]: event.target.value,
+                          }))
+                        }
+                        required
+                      />
+                    )}
                     <small>{property.description}</small>
                   </div>
                 ),

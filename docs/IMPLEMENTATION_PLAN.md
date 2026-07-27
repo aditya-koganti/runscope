@@ -2,12 +2,14 @@
 
 ## Delivery status
 
-Phases 0 through 6 are complete as of 2026-07-26. The current vertical slice
+Phases 0 through 7 are complete as of 2026-07-26. The current vertical slice
 uses PostgreSQL-backed run records, a trusted versioned Iris classifier, the
 central lifecycle state machine, durable logs/metrics/events, MinIO artifacts,
 and a Playwright-verified browser workflow. Run submission uses a
 transactional outbox, Redpanda, a separate idempotent worker, and REST polling
-as the recovery path under authenticated Redis-backed SSE.
+as the recovery path under authenticated Redis-backed SSE. A second bounded
+template demonstrates honest progress, durable cancellation checkpoints,
+controlled failure, retry lineage, metadata, and successful-run comparison.
 
 ## Phase 0 — Planning
 

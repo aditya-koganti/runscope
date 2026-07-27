@@ -9,6 +9,7 @@ from runscope_api.templates.classification import (
     TemplateResult,
     execute_classification,
 )
+from runscope_api.templates.slow_demo import SlowDemoParameters
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class TemplateDefinition:
     description: str
     version: str
     parameter_model: type[BaseModel]
-    execute: Callable[[Any], TemplateResult]
+    execute: Callable[[Any], TemplateResult] | None
 
     @property
     def parameter_schema(self) -> dict[str, Any]:
@@ -55,6 +56,18 @@ registry = TemplateRegistry(
             version="1.0.0",
             parameter_model=IrisClassificationParameters,
             execute=execute_classification,
-        )
+        ),
+        TemplateDefinition(
+            key="slow-demonstration",
+            name="Slow progress demonstration",
+            description=(
+                "Runs a bounded, trusted timer workload that records honest progress, "
+                "checks for cancellation, and can fail intentionally. It does not "
+                "claim to train a model."
+            ),
+            version="1.0.0",
+            parameter_model=SlowDemoParameters,
+            execute=None,
+        ),
     ]
 )

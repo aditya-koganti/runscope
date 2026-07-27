@@ -1,6 +1,8 @@
 import asyncio
 import hashlib
+import json
 import logging
+import math
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
@@ -28,6 +30,7 @@ from runscope_api.schemas.runs import RunCreate
 from runscope_api.state_machine import transition_run
 from runscope_api.storage import ArtifactStore
 from runscope_api.templates.registry import registry
+from runscope_api.templates.slow_demo import SlowDemoParameters
 
 logger = logging.getLogger(__name__)
 LivePublisher = Callable[[str, dict[str, Any]], Awaitable[None]]
@@ -156,7 +159,19 @@ async def execute_existing_run(
         await publish_live("run.status", {"status": RunStatus.RUNNING.value})
 
     definition = registry.get(template.key, template.version)
+    if template.key == "slow-demonstration":
+        if not isinstance(validated, SlowDemoParameters):
+            raise RuntimeError("Slow template parameters were not validated")
+        return await execute_slow_run(
+            session,
+            artifact_store,
+            run,
+            validated,
+            publish_live,
+        )
     try:
+        if definition.execute is None:
+            raise RuntimeError("Template has no registered executor")
         result = await asyncio.to_thread(definition.execute, validated)
         session.add_all(
             RunLog(
@@ -228,5 +243,134 @@ async def execute_existing_run(
                     "failure_code": failed_run.failure_code,
                 },
             )
+    await session.refresh(run)
+    return run
+
+
+async def execute_slow_run(
+    session: AsyncSession,
+    artifact_store: ArtifactStore,
+    run: Run,
+    parameters: SlowDemoParameters,
+    publish_live: LivePublisher | None,
+) -> Run:
+    total_steps = max(1, math.ceil(parameters.duration_seconds / parameters.interval_seconds))
+    start_log = RunLog(
+        run_id=run.id,
+        sequence_number=1,
+        level="INFO",
+        message=f"Started bounded progress demonstration with {total_steps} steps",
+    )
+    session.add(start_log)
+    await session.commit()
+    if publish_live:
+        await publish_live(
+            "run.log",
+            {"sequence_number": 1, "level": "INFO", "message": start_log.message},
+        )
+
+    for step in range(1, total_steps + 1):
+        await asyncio.sleep(parameters.interval_seconds)
+        await session.refresh(run)
+        if run.status == RunStatus.CANCELLING:
+            cancel_log = RunLog(
+                run_id=run.id,
+                sequence_number=step + 1,
+                level="INFO",
+                message="Cancellation acknowledged at a safe checkpoint",
+            )
+            session.add(cancel_log)
+            transition_run(session, run, RunStatus.CANCELLED, "run.cancelled")
+            await session.commit()
+            if publish_live:
+                await publish_live(
+                    "run.log",
+                    {
+                        "sequence_number": cancel_log.sequence_number,
+                        "level": cancel_log.level,
+                        "message": cancel_log.message,
+                    },
+                )
+                await publish_live("run.status", {"status": RunStatus.CANCELLED.value})
+            await session.refresh(run)
+            return run
+
+        progress = step / total_steps
+        progress_log = RunLog(
+            run_id=run.id,
+            sequence_number=step + 1,
+            level="INFO",
+            message=f"Demonstration progress {progress:.0%}",
+        )
+        progress_metric = RunMetric(
+            run_id=run.id,
+            name="progress",
+            value=progress,
+            step=step,
+        )
+        session.add_all([progress_log, progress_metric])
+        await session.commit()
+        if publish_live:
+            await publish_live(
+                "run.log",
+                {
+                    "sequence_number": progress_log.sequence_number,
+                    "level": progress_log.level,
+                    "message": progress_log.message,
+                },
+            )
+            await publish_live(
+                "run.metric",
+                {"name": "progress", "value": progress, "step": step},
+            )
+
+    if parameters.fail_intentionally:
+        run.failure_code = "intentional_demo_failure"
+        run.failure_message = "The slow demonstration was configured to fail"
+        transition_run(
+            session,
+            run,
+            RunStatus.FAILED,
+            "run.failed",
+            {"retryable": True, "intentional": True},
+        )
+        await session.commit()
+        if publish_live:
+            await publish_live(
+                "run.status",
+                {
+                    "status": RunStatus.FAILED.value,
+                    "failure_code": run.failure_code,
+                },
+            )
+        await session.refresh(run)
+        return run
+
+    artifact_data = json.dumps(
+        {"completed_steps": total_steps, "progress": 1.0},
+        indent=2,
+    ).encode()
+    storage_key = f"{run.id}/progress.json"
+    await artifact_store.put(storage_key, artifact_data, "application/json")
+    session.add(
+        Artifact(
+            run_id=run.id,
+            name="progress.json",
+            storage_key=storage_key,
+            mime_type="application/json",
+            size_bytes=len(artifact_data),
+            checksum=hashlib.sha256(artifact_data).hexdigest(),
+        )
+    )
+    transition_run(
+        session,
+        run,
+        RunStatus.SUCCEEDED,
+        "run.succeeded",
+        {"metric_count": total_steps, "artifact_count": 1},
+    )
+    await session.commit()
+    if publish_live:
+        await publish_live("run.status", {"status": RunStatus.SUCCEEDED.value})
     await session.refresh(run)
     return run

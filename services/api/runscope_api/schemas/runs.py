@@ -34,6 +34,19 @@ class RunCreate(BaseModel):
     tags: list[str] = Field(default_factory=list, max_length=20)
 
 
+class RunRetryRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    parameter_overrides: dict[str, Any] = Field(default_factory=dict)
+
+
+class RunMetadataUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    notes: str = Field(default="", max_length=4000)
+    tags: list[str] = Field(default_factory=list, max_length=20)
+
+
 class RunResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -107,3 +120,20 @@ class RunEventResponse(BaseModel):
     new_status: RunStatus | None
     event_metadata: dict[str, Any]
     created_at: datetime
+
+
+class RunCompareRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_ids: list[UUID] = Field(min_length=2, max_length=5)
+
+
+class RunComparisonItem(BaseModel):
+    run: RunResponse
+    parameters: dict[str, Any]
+    metrics: dict[str, float]
+
+
+class RunCompareResponse(BaseModel):
+    items: list[RunComparisonItem]
+    best_by_metric: dict[str, UUID]

@@ -35,6 +35,20 @@
   work. The dependency graph and worker error boundary now prevent that class of
   failure.
 
+## Phase 7 verification snapshot
+
+- 94 Python tests pass, including command authorization, cancellation state,
+  validated retry overrides and lineage, normalized notes/tags, comparison, and
+  duplicate-ID rejection.
+- Frontend ESLint and TypeScript checks pass; 6 Vitest tests and the production
+  Vite build pass in the development image.
+- The production API/worker and web images build successfully, and all seven
+  Compose services start with the API and dependencies healthy.
+- A 34-second real Chromium workflow signs in, creates project/experiment data,
+  completes and downloads a classification artifact, cancels a live slow run,
+  retries an intentional failure to success, saves metadata, and compares the
+  two successful runs.
+
 ## Layers
 
 - **Backend unit:** state transitions (all valid and invalid pairs), validation,

@@ -122,3 +122,14 @@ export interface Artifact {
   checksum: string;
   created_at: string;
 }
+
+export interface RunComparisonItem {
+  run: Run;
+  parameters: Record<string, unknown>;
+  metrics: Record<string, number>;
+}
+
+export interface RunComparison {
+  items: RunComparisonItem[];
+  best_by_metric: Record<string, string>;
+}

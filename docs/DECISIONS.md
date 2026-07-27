@@ -94,3 +94,14 @@ cannot fail a run. The browser consumes SSE with an Authorization header through
 streaming `fetch`, deduplicates event IDs, reconnects after disconnect, and
 keeps low-frequency REST polling. Heartbeats keep intermediaries from silently
 closing idle streams. Redis loss reduces responsiveness but not correctness.
+
+## ADR-012: Cancellation is cooperative and retries create child runs
+
+**Status:** Accepted.
+
+The API records `RUNNING -> CANCELLING`; the trusted slow template re-reads that
+durable status at bounded checkpoints before recording `CANCELLED`. It does not
+kill a process mid-write. A retry copies and revalidates the failed run's
+parameters into a new queued child, increments `attempt_number`, and preserves
+the failed parent as immutable history. The demonstration retry UI changes only
+the explicit `fail_intentionally` parameter; arbitrary code remains impossible.

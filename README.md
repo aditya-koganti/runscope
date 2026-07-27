@@ -8,7 +8,10 @@ and experiment, configure a schema-validated trusted Iris random-forest
 template, submit through a PostgreSQL outbox and Redpanda, execute real
 scikit-learn training in a separate worker, inspect lifecycle
 events/logs/metrics, and download MinIO-backed model, metric JSON, and SVG chart
-artifacts. RunScope never accepts arbitrary Python or shell commands.
+artifacts. A second trusted template demonstrates live progress, cooperative
+cancellation, intentional failure, parent-child retry lineage, notes/tags, and
+two-to-five-run comparison. RunScope never accepts arbitrary Python or shell
+commands.
 
 ## Demonstration workflow
 
@@ -19,6 +22,9 @@ artifacts. RunScope never accepts arbitrary Python or shell commands.
    and submit.
 5. Open the completed run to inspect its state timeline, metrics chart,
    parameters, logs, and downloadable artifacts.
+6. Submit **Slow progress demonstration** and cancel it while it is running.
+7. Submit another slow run with intentional failure enabled, then retry it.
+8. Save notes/tags and compare the successful classification and retry runs.
 
 ## Foundation setup
 

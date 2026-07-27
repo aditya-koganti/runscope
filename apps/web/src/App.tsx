@@ -4,6 +4,7 @@ import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { ExperimentDetailPage } from "./pages/ExperimentDetailPage";
+import { CompareRunsPage } from "./pages/CompareRunsPage";
 import { CreateRunPage } from "./pages/CreateRunPage";
 import { ExperimentsPage } from "./pages/ExperimentsPage";
 import { OverviewPage } from "./pages/OverviewPage";
@@ -11,6 +12,7 @@ import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { RunDetailPage } from "./pages/RunDetailPage";
+import { RunsPage } from "./pages/RunsPage";
 
 export function App() {
   return (
@@ -31,6 +33,8 @@ export function App() {
               path="/experiments/:experimentId/runs/new"
               element={<CreateRunPage />}
             />
+            <Route path="/runs" element={<RunsPage />} />
+            <Route path="/runs/compare" element={<CompareRunsPage />} />
             <Route path="/runs/:runId" element={<RunDetailPage />} />
           </Route>
         </Route>
