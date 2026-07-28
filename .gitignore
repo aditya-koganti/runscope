@@ -18,6 +18,7 @@ dist/
 playwright-report/
 test-results/
 load-results/
+demo-output/
 
 # Local data and private working files
 local-data/

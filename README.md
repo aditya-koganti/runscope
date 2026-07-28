@@ -1,5 +1,8 @@
 # RunScope
 
+[![CI](https://github.com/aditya-koganti/runscope/actions/workflows/ci.yml/badge.svg)](https://github.com/aditya-koganti/runscope/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 RunScope is a self-service experiment and CPU job-management platform for small,
 trusted machine-learning workloads. It demonstrates the control-plane and
 execution-plane problems behind an ML platform: durable state, scheduling,
@@ -11,6 +14,13 @@ Redpanda, MinIO, a separate scheduler, and two workers. RunScope never accepts
 arbitrary Python, shell commands, container images, or pickle uploads.
 
 ![A completed RunScope Iris classification with metrics, lifecycle, artifacts, and logs](docs/assets/runscope-run-detail.png)
+
+## Video walkthrough
+
+[Watch the 54-second captioned product walkthrough](https://github.com/aditya-koganti/runscope/releases/download/v0.1.0/runscope-demo.mp4).
+It exercises the real nine-service local stack rather than a mocked interface.
+The release asset is kept outside the Git history, and the recording script is
+checked in for reproducibility.
 
 ## What it demonstrates
 
@@ -189,6 +199,7 @@ sends code or commands.
 | `make lint` | Run Python lint/types and frontend lint/types |
 | `make verify` | Run supported local checks and the frontend build |
 | `make verify-e2e` | Add the Chromium workflow against a running seeded stack |
+| `make demo-video` | Record the real browser workflow to `demo-output/runscope-demo.webm` |
 | `make screenshots` | Refresh the documented product screenshots |
 | `make load-test` | Run the bounded read/SSE Locust smoke scenario |
 
@@ -219,6 +230,18 @@ seeded stack with:
 cd apps/web
 npm run screenshots
 ```
+
+Record a captioned walkthrough of the same real workflow with:
+
+```bash
+cd apps/web
+npm run demo-video
+```
+
+The WebM output is written to the ignored `demo-output` directory. The recorder
+creates uniquely named local demonstration data and covers classification,
+artifacts, cancellation, retry lineage, comparison, workers, and platform
+health.
 
 ## API surface
 
@@ -364,3 +387,7 @@ See [Security](docs/SECURITY.md) and [Limitations](docs/LIMITATIONS.md).
 - [Kubernetes reference](docs/KUBERNETES.md)
 - [Architecture decisions](docs/DECISIONS.md)
 - [Implementation phases](docs/IMPLEMENTATION_PLAN.md)
+
+## License
+
+RunScope is available under the [MIT License](LICENSE).
