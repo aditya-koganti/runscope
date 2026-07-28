@@ -148,7 +148,7 @@ export function CreateRunPage() {
             >
               {templates.data.map((template) => (
                 <option key={template.id} value={template.key}>
-                  {template.name} · {template.version}
+                  {template.name} | {template.version}
                 </option>
               ))}
             </select>

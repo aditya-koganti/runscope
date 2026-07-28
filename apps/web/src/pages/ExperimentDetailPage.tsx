@@ -88,7 +88,7 @@ export function ExperimentDetailPage() {
             </article>
             <article className="metric-card">
               <span>Successful run</span>
-              <strong>{bestRun ? "Yes" : "—"}</strong>
+              <strong>{bestRun ? "Yes" : "N/A"}</strong>
               <small>{bestRun ? "Open it below" : "Complete a run to compare"}</small>
             </article>
           </section>
@@ -130,7 +130,7 @@ export function ExperimentDetailPage() {
                           </span>
                         </td>
                         <td>
-                          {run.requested_cpu} CPU · {run.requested_memory_mb} MB
+                          {run.requested_cpu} CPU | {run.requested_memory_mb} MB
                         </td>
                         <td>{new Date(run.created_at).toLocaleString()}</td>
                       </tr>

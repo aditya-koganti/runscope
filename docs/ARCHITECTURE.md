@@ -72,7 +72,7 @@ sequenceDiagram
     S->>D: Lock queued run and allocate lease
     S->>B: run.assigned
     B->>W: Assignment
-    W->>D: Verify lease; transition RUNNING
+    W->>D: Verify lease, then transition to RUNNING
     W-->>D: Logs and metrics
     W->>O: Upload artifacts
     W->>D: Transition SUCCEEDED and release lease

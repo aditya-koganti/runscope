@@ -70,7 +70,7 @@ export function SignInPage() {
             </div>
           ) : null}
           <button className="button button-primary" disabled={submitting} type="submit">
-            {submitting ? "Signing in…" : "Sign in"}
+            {submitting ? "Signing in..." : "Sign in"}
           </button>
           <p className="form-help">
             Local demonstration credentials are prefilled. This is not an enterprise

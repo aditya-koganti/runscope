@@ -20,7 +20,7 @@ import type { Page, Run, RunComparison } from "../domain/types";
 const chartColors = ["#64d7b3", "#82aaff", "#f2b36d", "#d98cff", "#ff8f9a"];
 
 function displayValue(value: unknown) {
-  if (value === undefined) return "—";
+  if (value === undefined) return "N/A";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
@@ -99,7 +99,8 @@ export function CompareRunsPage() {
                 <span>
                   <strong>Run {run.id.slice(0, 8)}</strong>
                   <small>
-                    Attempt {run.attempt_number} · {new Date(run.created_at).toLocaleString()}
+                    Attempt {run.attempt_number} |{" "}
+                    {new Date(run.created_at).toLocaleString()}
                   </small>
                 </span>
               </label>
@@ -111,7 +112,7 @@ export function CompareRunsPage() {
               onClick={() => comparison.mutate()}
             >
               {comparison.isPending
-                ? "Comparing…"
+                ? "Comparing..."
                 : `Compare ${selected.length || ""} runs`}
             </button>
           </section>
@@ -186,7 +187,7 @@ export function CompareRunsPage() {
                         }
                         key={item.run.id}
                       >
-                        {item.metrics[name]?.toFixed(4) ?? "—"}
+                        {item.metrics[name]?.toFixed(4) ?? "N/A"}
                       </td>
                     ))}
                   </tr>

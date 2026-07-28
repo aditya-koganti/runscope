@@ -19,7 +19,7 @@ export function QueryState({ loading, error, onRetry, children }: QueryStateProp
   if (error) {
     return (
       <div className="panel state-panel" role="alert">
-        <h2>We couldn’t load this data</h2>
+        <h2>We couldn't load this data</h2>
         <p>The API may be temporarily unavailable.</p>
         {onRetry ? (
           <button className="button button-secondary" onClick={onRetry} type="button">

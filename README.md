@@ -2,9 +2,9 @@
 
 RunScope is a self-service experiment and CPU job-management platform for small,
 trusted machine-learning workloads. It demonstrates the control-plane and
-execution-plane problems behind an ML platform—durable state, scheduling,
-idempotent messaging, live telemetry, artifacts, cancellation, and recovery—
-without pretending to be a production cluster manager.
+execution-plane problems behind an ML platform: durable state, scheduling,
+idempotent messaging, live telemetry, artifacts, cancellation, and recovery. It
+does not pretend to be a production cluster manager.
 
 The complete workflow runs locally with React, FastAPI, PostgreSQL, Redis,
 Redpanda, MinIO, a separate scheduler, and two workers. RunScope never accepts
@@ -80,7 +80,7 @@ sequenceDiagram
     Scheduler->>DB: Lock run and reserve worker lease
     Scheduler->>Broker: Publish run.assigned
     Broker->>Worker: Deliver assignment at least once
-    Worker->>DB: Re-read run + lease; transition RUNNING
+    Worker->>DB: Re-read run and lease, then transition to RUNNING
     Worker-->>DB: Persist logs, metrics, and lifecycle events
     Worker->>Artifacts: Upload bounded artifacts
     Worker->>DB: Commit SUCCEEDED and release capacity
@@ -176,6 +176,25 @@ and experiment, submits the registered Iris template, follows the durable run
 state with finite polling, and reports the metric/artifact counts. It never
 sends code or commands.
 
+### Common commands
+
+| Command | Purpose |
+| --- | --- |
+| `make setup` | Install Python development dependencies and the locked web dependencies |
+| `make dev` | Build and start the Compose stack in the foreground |
+| `make stop` | Stop the Compose stack without deleting volumes |
+| `make migrate` | Apply Alembic migrations |
+| `make seed` | Idempotently create local demonstration users and templates |
+| `make test` | Run backend and frontend unit tests |
+| `make lint` | Run Python lint/types and frontend lint/types |
+| `make verify` | Run supported local checks and the frontend build |
+| `make verify-e2e` | Add the Chromium workflow against a running seeded stack |
+| `make screenshots` | Refresh the documented product screenshots |
+| `make load-test` | Run the bounded read/SSE Locust smoke scenario |
+
+On Windows without GNU Make, use the equivalent commands in the
+[Makefile](Makefile) directly.
+
 ## Browser workflow
 
 1. Sign in as the researcher.
@@ -229,7 +248,7 @@ python scripts/verify.py
 python scripts/verify.py --with-e2e  # with the seeded Compose stack running
 ```
 
-The final local verification on 2026-07-27 recorded:
+The final local verification on 2026-07-28 recorded:
 
 | Gate | Result |
 | --- | --- |
@@ -238,7 +257,7 @@ The final local verification on 2026-07-27 recorded:
 | Frontend | ESLint and TypeScript passed; 7 Vitest tests passed |
 | Build | Vite production build passed; both production images built |
 | Services | Compose config passed; all 9 services started |
-| Browser | 1 Chromium workflow passed in 24.2 s |
+| Browser | 1 Chromium workflow passed in 19.8 s |
 | Kubernetes | 10/10 resources passed Kubernetes 1.29 schema validation |
 | Node audit | `npm audit --audit-level=high`: 0 vulnerabilities |
 | Hygiene | diff/secret-pattern scans passed |
@@ -273,6 +292,33 @@ caveats.
 
 See [Kubernetes](docs/KUBERNETES.md) and
 [Operations](docs/OPERATIONS.md).
+
+## Design trade-offs
+
+- PostgreSQL owns durable state; Redpanda messages announce committed changes
+  and consumers treat duplicate delivery as normal.
+- Static registered templates trade arbitrary extensibility for a clear,
+  testable execution boundary.
+- The scheduler models priority, CPU, memory, heartbeats, and leases without
+  claiming operating-system isolation or production cluster semantics.
+- SSE provides low-complexity live updates, while REST remains the recovery path
+  after disconnects or missed ephemeral events.
+- Compose favors a reproducible local demonstration over high availability; the
+  Kubernetes manifests keep stateful service operations external.
+
+## Future improvements
+
+- Replace local JWT identity with OIDC, short-lived session renewal, and managed
+  secrets.
+- Add tenant isolation, TLS, network policy, audit export, backups, and
+  high-availability stateful dependencies before any untrusted deployment.
+- Add scheduler fairness, quotas, preemption, and autoscaling only with matching
+  durable contracts and failure tests.
+- Split large frontend routes to reduce the current production bundle.
+- Add longer soak and recovery tests across process and dependency restarts.
+
+See [Architecture decisions](docs/DECISIONS.md) and
+[Limitations](docs/LIMITATIONS.md) for the detailed rationale and boundaries.
 
 ## Repository map
 

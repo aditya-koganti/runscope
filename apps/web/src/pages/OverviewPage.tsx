@@ -49,7 +49,7 @@ export function OverviewPage() {
     [
       "Average duration",
       summary.data?.average_duration_seconds == null
-        ? "—"
+        ? "N/A"
         : `${summary.data.average_duration_seconds.toFixed(1)}s`,
       "completed runs",
     ],
@@ -126,7 +126,7 @@ export function OverviewPage() {
                     </span>
                   </td>
                   <td>
-                    {run.requested_cpu} CPU · {run.requested_memory_mb} MB
+                    {run.requested_cpu} CPU | {run.requested_memory_mb} MB
                   </td>
                   <td>{new Date(run.created_at).toLocaleString()}</td>
                 </tr>
@@ -137,7 +137,7 @@ export function OverviewPage() {
       ) : (
         <section className="panel empty-state">
           <div className="empty-icon" aria-hidden="true">
-            ↗
+            +
           </div>
           <h2>No runs yet</h2>
           <p>Create a project and experiment before submitting a registered template.</p>

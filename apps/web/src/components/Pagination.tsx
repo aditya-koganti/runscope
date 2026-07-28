@@ -9,7 +9,7 @@ export function Pagination({ page, pages, total, onPage }: PaginationProps) {
   return (
     <div className="pagination" aria-label="Pagination">
       <span>
-        Page {pages ? page : 0} of {pages} · {total} total
+        Page {pages ? page : 0} of {pages} | {total} total
       </span>
       <div>
         <button

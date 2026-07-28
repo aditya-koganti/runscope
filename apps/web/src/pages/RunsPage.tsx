@@ -103,7 +103,7 @@ export function RunsPage() {
                     </td>
                     <td>{run.attempt_number}</td>
                     <td>
-                      {run.requested_cpu} CPU · {run.requested_memory_mb} MB
+                      {run.requested_cpu} CPU | {run.requested_memory_mb} MB
                     </td>
                     <td>{new Date(run.created_at).toLocaleString()}</td>
                   </tr>

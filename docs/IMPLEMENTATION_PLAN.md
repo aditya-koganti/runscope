@@ -25,66 +25,66 @@ Bounded demo, verification, and screenshot utilities reproduce the main claims;
 captured screens show the real seeded stack, and unused production dependency
 declarations have been removed.
 
-## Phase 0 — Planning
+## Phase 0 - Planning
 
 Create permanent rules and initial product, architecture, model, API, event,
 security, testing, operations, performance, limitation, and decision documents.
 Gate: documentation review, secret scan, clean diff, focused commit.
 
-## Phase 1 — Foundation
+## Phase 1 - Foundation
 
 Scaffold the monorepo, FastAPI package, React/Vite app, shared contracts,
 SQLAlchemy/Alembic, dependency configuration, JSON logging, correlation IDs,
 health/readiness, Docker Compose, Make targets, and test/lint/type infrastructure.
 
-## Phase 2 — Authentication
+## Phase 2 - Authentication
 
 Add User persistence, hashing/JWT, local seed command, role dependencies,
 sign-in UI, in-memory session, protected routes, and authorization tests.
 
-## Phase 3 — Projects and experiments
+## Phase 3 - Projects and experiments
 
 Add constrained models/migrations, CRUD/search/filter/sort/page APIs and pages,
 permission behavior, and one browser CRUD flow.
 
-## Phase 4 — One synchronous real run
+## Phase 4 - One synchronous real run
 
 Implement the central state machine, template registry, Iris classification,
 durable logs/metrics/artifacts using the storage interface, run create/detail
 pages, and a successful synchronous end-to-end test.
 
-## Phase 5 — Background worker and messaging
+## Phase 5 - Background worker and messaging
 
 Add versioned contracts, Kafka broker interface/Redpanda adapter, outbox
 publication, separate worker, MinIO store, dedupe, and integration tests.
 
-## Phase 6 — Live updates
+## Phase 6 - Live updates
 
 Add Redis fan-out, run SSE, cursor recovery, frontend reconnect/deduplication,
 connection indicators, and REST fallback tests.
 
-## Phase 7 — Cancellation, retry, and comparison
+## Phase 7 - Cancellation, retry, and comparison
 
 Add slow/failable trusted template, cancellation polling, retry lineage, notes,
 tags, comparison API/pages/charts, lifecycle events, and coverage.
 
-## Phase 8 — Scheduler and worker resources
+## Phase 8 - Scheduler and worker resources
 
 Add worker registration/heartbeat, capacity-aware priority scheduling, leases,
 expiry/stale recovery, multiple-worker support, and worker views.
 
-## Phase 9 — Reliability and observability
+## Phase 9 - Reliability and observability
 
 Add Prometheus metrics, dependency summary, correlation propagation, structured
 error mapping, retry policy, audit coverage, redaction, and failure tests.
 
-## Phase 10 — CI/CD, Kubernetes, and performance
+## Phase 10 - CI/CD, Kubernetes, and performance
 
 Add production images, GitHub Actions checks/scans, Kubernetes manifests with
 probes/resources/secret references/migration job, Locust scenarios, and record
 only benchmarks executed in the available environment.
 
-## Phase 11 — Portfolio polish
+## Phase 11 - Portfolio polish
 
 Polish the engineering UI and README, add captured screenshots if available,
 demo/verification scripts, remove dead code/placeholders, scan for secrets, and

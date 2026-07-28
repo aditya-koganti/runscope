@@ -111,7 +111,7 @@ export function ProjectsPage() {
             disabled={createProject.isPending || name.trim().length < 2}
             type="submit"
           >
-            {createProject.isPending ? "Creating…" : "Create project"}
+            {createProject.isPending ? "Creating..." : "Create project"}
           </button>
         </form>
       ) : null}

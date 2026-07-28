@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 *.py[cod]
@@ -16,6 +18,26 @@ dist/
 playwright-report/
 test-results/
 load-results/
+
+# Local data and private working files
+local-data/
+private/
+scratch/
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.bak
+*.tmp
+*.log
+
+# Source design files
+*.fig
+*.sketch
+*.psd
+*.ai
+*.xd
+*.drawio
 
 .idea/
 .vscode/

@@ -18,7 +18,7 @@ import type {
 import { useRunStream } from "../hooks/useRunStream";
 
 function formatDate(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "—";
+  return value ? new Date(value).toLocaleString() : "N/A";
 }
 
 export function RunDetailPage() {
@@ -158,7 +158,7 @@ export function RunDetailPage() {
                   disabled={cancelRun.isPending}
                   onClick={() => cancelRun.mutate()}
                 >
-                  {cancelRun.isPending ? "Cancelling…" : "Cancel run"}
+                  {cancelRun.isPending ? "Cancelling..." : "Cancel run"}
                 </button>
               ) : null}
               {canControl && run.data.status === "FAILED" ? (
@@ -168,7 +168,7 @@ export function RunDetailPage() {
                   disabled={retryRun.isPending}
                   onClick={() => retryRun.mutate()}
                 >
-                  {retryRun.isPending ? "Retrying…" : "Retry run"}
+                  {retryRun.isPending ? "Retrying..." : "Retry run"}
                 </button>
               ) : null}
             </div>
@@ -325,7 +325,7 @@ export function RunDetailPage() {
                   type="submit"
                   disabled={updateMetadata.isPending}
                 >
-                  {updateMetadata.isPending ? "Saving…" : "Save metadata"}
+                  {updateMetadata.isPending ? "Saving..." : "Save metadata"}
                 </button>
               </form>
             ) : (

@@ -134,7 +134,7 @@ export function ProjectDetailPage() {
                 disabled={createExperiment.isPending || name.trim().length < 2}
                 type="submit"
               >
-                {createExperiment.isPending ? "Creating…" : "Create experiment"}
+                {createExperiment.isPending ? "Creating..." : "Create experiment"}
               </button>
             </form>
           ) : null}
