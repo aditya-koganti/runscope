@@ -8,7 +8,7 @@ from runscope_api.state_machine import VALID_TRANSITIONS, validate_transition
 
 @pytest.mark.parametrize(
     ("previous", "target"),
-    itertools.product(RunStatus, RunStatus),
+    tuple(itertools.product(RunStatus, RunStatus)),
 )
 def test_state_machine_accepts_exactly_declared_transitions(
     previous: RunStatus, target: RunStatus

@@ -96,10 +96,10 @@
 - The 5-user read/SSE and 2-user mutating Locust smoke runs completed without
   failures. Exact latency and scheduling results are recorded in
   `docs/PERFORMANCE.md`.
-- `npm audit --audit-level=high` reports zero vulnerabilities. The Python audit
-  and Docker Scout image scans were not allowed locally because they may
-  disclose dependency metadata; equivalent blocking CI gates are configured
-  but not claimed as executed.
+- `npm audit --audit-level=high` reports zero vulnerabilities. `pip-audit`
+  reports no known vulnerabilities, and Trivy 0.70.0 reports no HIGH or
+  CRITICAL findings in either production image. These remain blocking GitHub
+  Actions gates.
 
 ## Phase 11 verification snapshot
 

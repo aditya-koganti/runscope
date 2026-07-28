@@ -280,15 +280,14 @@ The final local verification on 2026-07-28 recorded:
 | Frontend | ESLint and TypeScript passed; 7 Vitest tests passed |
 | Build | Vite production build passed; both production images built |
 | Services | Compose config passed; all 9 services started |
-| Browser | 1 Chromium workflow passed in 19.8 s |
+| Browser | 1 Chromium workflow passed in 23.7 s |
 | Kubernetes | 10/10 resources passed Kubernetes 1.29 schema validation |
 | Node audit | `npm audit --audit-level=high`: 0 vulnerabilities |
+| Python audit | `pip-audit`: no known vulnerabilities |
+| Image audit | Trivy 0.70.0: 0 HIGH/CRITICAL findings in both production images |
 | Hygiene | diff/secret-pattern scans passed |
 
-Python dependency and image scanning are blocking CI jobs but were not reported
-as locally passing because this environment did not permit disclosing dependency
-metadata to external scanners. GitHub Actions is configured, not claimed as
-executed.
+Python dependency and image scanning also run as blocking GitHub Actions jobs.
 
 ## Measured local performance
 

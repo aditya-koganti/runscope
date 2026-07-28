@@ -5,6 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
+RUN python -m pip install --upgrade "pip==26.1.2"
 COPY pyproject.toml README.md ./
 COPY services/api ./services/api
 COPY services/worker ./services/worker
@@ -12,10 +13,10 @@ COPY services/scheduler ./services/scheduler
 COPY packages/contracts ./packages/contracts
 
 FROM runtime AS development
-RUN pip install -e ".[dev]"
+RUN python -m pip install -e ".[dev]"
 
 FROM runtime AS production
-RUN pip install .
+RUN python -m pip install .
 RUN groupadd --system --gid 10001 runscope \
     && useradd --system --uid 10001 --gid runscope --no-create-home runscope
 USER runscope
